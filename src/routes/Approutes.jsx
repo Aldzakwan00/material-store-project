@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 import Login from '../features/auth/pages/Login'
 import Dashboard from '../features/dashboard/pages/Dashboard'
+import SuratJalan from '../features/surat-jalan/pages/SuratJalan'
 import ProtectedRoute from './ProtectedRoutes'
 
 const AppRoutes = () => {
@@ -13,6 +14,7 @@ const AppRoutes = () => {
 
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/surat-jalan" element={<SuratJalan />} />
             </Route>
         </Routes>
     )

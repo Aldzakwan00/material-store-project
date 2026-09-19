@@ -14,12 +14,12 @@ const Login = () => {
     const dummyEmail = 'admin'
     const dummyPassword = '123456'
 
-    if (email === dummyEmail && password === dummyPassword) {
-      localStorage.setItem('isLoggedIn', 'true')
+    if (username === dummyEmail && password === dummyPassword) {
+      sessionStorage.setItem('isLoggedIn', 'true')
 
       navigate('/dashboard')
     } else {
-      setError('Email atau password salah')
+      setError('Username atau password salah')
     }
   }
 

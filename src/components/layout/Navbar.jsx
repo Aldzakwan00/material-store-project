@@ -5,7 +5,7 @@ const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const navigate = useNavigate() 
-  const handleLogout = () => { localStorage.removeItem('isLoggedIn') 
+  const handleLogout = () => { sessionStorage.removeItem('isLoggedIn') 
     navigate('/login') }
 
   return (
@@ -44,52 +44,59 @@ const Navbar = () => {
             {isDropdownOpen && (
               <div className="absolute right-0 z-10 mt-3 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
 
-                <a
-                  href="#"
+                <Link
+                  to="/data-customer"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Data Customer
-                </a>
+                </Link>
 
-                <a
-                  href="#"
+                <Link
+                  to="/data-driver"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Data Driver
-                </a>
+                </Link>
 
-                <a
-                  href="#"
+                <Link
+                  to="/data-material"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Data Material
-                </a>
+                </Link>
 
-                <a
-                  href="#"
+                <Link
+                  to="/data-proyek"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Data Proyek
-                </a>
+                </Link>
+
+                <Link 
+                  to="/surat-jalan"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Input Surat Jalan
+                </Link>
 
               </div>
             )}
           </div>
 
           {/* About */}
-          <a
-            href="#"
+          <Link
+            to="/report"
             className="text-gray-700 transition hover:text-blue-600"
           >
             Report
-          </a>
+          </Link>
 
           <button 
             onClick={handleLogout} 
             className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-red-600" 
             > 
             Logout 
-        </button>
+          </button>
 
         </div>
       </div>
