@@ -1,9 +1,32 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
+  const navigate = useNavigate()
+
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+
+    const dummyEmail = 'admin'
+    const dummyPassword = '123456'
+
+    if (email === dummyEmail && password === dummyPassword) {
+      localStorage.setItem('isLoggedIn', 'true')
+
+      navigate('/dashboard')
+    } else {
+      setError('Email atau password salah')
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-md">
+
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-gray-800">
             Welcome Back
@@ -14,19 +37,22 @@ const Login = () => {
           </p>
         </div>
 
-        <form className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-5">
+
           <div>
             <label
-              htmlFor="email"
+              htmlFor="username"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Email
+              Username
             </label>
 
             <input
-              type="email"
-              id="email"
-              placeholder="Masukkan email"
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername (e.target.value)}
+              placeholder="Masukkan username"
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -42,10 +68,18 @@ const Login = () => {
             <input
               type="password"
               id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Masukkan password"
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
+
+          {error && (
+            <p className="text-sm text-red-500">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
@@ -53,6 +87,7 @@ const Login = () => {
           >
             Login
           </button>
+
         </form>
       </div>
     </div>
