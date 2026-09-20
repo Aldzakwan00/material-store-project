@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import userIcon from '../../../assets/img/apip/username.png'
 import keyPassword from '../../../assets/img/apip/key-password.png'
 import warningLogin from '../../../assets/img/apip/warning.png'
+import visibilityIcon from '../../../assets/img/apip/visibility.png'
 
 const Login = () => {
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -59,7 +61,7 @@ const Login = () => {
               <img
                 src={userIcon}
                 alt=""
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2"
               />
 
               <input
@@ -82,20 +84,34 @@ const Login = () => {
             </label>
 
             <div className="relative">
+              {/* Icon password kiri */}
               <img
                 src={keyPassword}
                 alt=""
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2"
               />
 
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password"
-                className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-[#E2E2E2]"
+                className="w-full rounded-lg border border-gray-300 bg-[#E2E2E2] py-2.5 pl-10 pr-10 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
+
+              {/* Icon mata kanan */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-5 top-1/2 -translate-y-1/2"
+              >
+                <img
+                  src={visibilityIcon}
+                  alt="Tampilkan password"
+                  className="h-5 w-5"
+                />
+              </button>
             </div>
           </div>
 
