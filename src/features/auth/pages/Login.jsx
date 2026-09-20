@@ -4,6 +4,7 @@ import userIcon from '../../../assets/img/icon/username.png'
 import keyPassword from '../../../assets/img/icon/key-password.png'
 import warningLogin from '../../../assets/img/icon/warning.png'
 import visibilityIcon from '../../../assets/img/icon/visibility.png'
+import invisibilityIcon from '../../../assets/img/icon/invisibility.png'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -70,7 +71,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan username"
-                className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-[#E2E2E2]"
+                className="w-full rounded-lg border border-gray-300 py-2.5 pl-12 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-[#E2E2E2]"
               />
             </div>
           </div>
@@ -97,7 +98,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password"
-                className="w-full rounded-lg border border-gray-300 bg-[#E2E2E2] py-2.5 pl-10 pr-10 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-lg border border-gray-300 bg-[#E2E2E2] py-2.5 pl-12 pr-10 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
 
               {/* Icon mata kanan */}
@@ -107,8 +108,8 @@ const Login = () => {
                 className="absolute right-5 top-1/2 -translate-y-1/2"
               >
                 <img
-                  src={visibilityIcon}
-                  alt="Tampilkan password"
+                  src={showPassword ? invisibilityIcon : visibilityIcon}
+                  alt={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                   className="h-5 w-5"
                 />
               </button>
