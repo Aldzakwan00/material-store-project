@@ -26,10 +26,8 @@ const Login = () => {
       setError('Username wajib diisi')
     } else if (!password) {
       setError('Password wajib diisi')
-    } else if (username !== dummyEmail) {
-      setError('Username salah')
-    } else if (password !== dummyPassword) {
-      setError('Password salah')
+    } else if (username !== dummyEmail || password !== dummyPassword) {
+      setError('Username atau password salah')
     } else {
       sessionStorage.setItem('isLoggedIn', 'true')
       navigate('/dashboard')

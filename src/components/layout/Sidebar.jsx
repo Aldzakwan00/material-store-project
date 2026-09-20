@@ -25,7 +25,7 @@ const Sidebar = () => {
 
   return (
     <aside className="fixed left-0 top-0 flex h-screen w-56 flex-col bg-[#6E5CC2] text-white">
-      <div className="flex h-38 shrink-0 items-center justify-center bg-gradient-to-br from-[#4c00a8] to-[#32006f] px-6">
+      <div className="flex h-38 shrink-0 items-center justify-center bg-[#51448C] px-6">
         <h1 className="text-[25px] text-center font-bold">ADI KARYA UTAMA</h1>
       </div>
 
@@ -50,7 +50,7 @@ const Sidebar = () => {
           onToggle={() => toggleSection('transaksi')}
         >
           <SidebarButton to="/data-proyek" icon={proyekIcon}>Data Proyek</SidebarButton>
-          <SidebarButton to="/surat-jalan" icon={suratJalanIcon}>Input Surat Jalan</SidebarButton>
+          <SidebarButton to="/surat-jalann" icon={suratJalanIcon}>Input Surat Jalan</SidebarButton>
           <SidebarButton to="/nota-tagihan">Nota Tagihan</SidebarButton>
           <SidebarButton to="/pembayaran-nota">Pembayaran Nota</SidebarButton>
         </SidebarSection>
