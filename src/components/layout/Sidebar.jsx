@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import SidebarButton from './SidebarButton'
-import customerIcon from '../../assets/img/apip/customer_icon.png'
-import driverIcon from '../../assets/img/apip/driver_icon.png'
-import materialIcon from '../../assets/img/apip/material_icon.png'
-import proyekIcon from '../../assets/img/apip/proyek_icon.png'
-import suratJalanIcon from '../../assets/img/apip/surat_jalan_icon.png'
+import customerIcon from '../../assets/img/icon/customer_icon.png'
+import driverIcon from '../../assets/img/icon/driver_icon.png'
+import materialIcon from '../../assets/img/icon/material_icon.png'
+import proyekIcon from '../../assets/img/icon/proyek_icon.png'
+import suratJalanIcon from '../../assets/img/icon/surat_jalan_icon.png'
 
 
 const Sidebar = () => {

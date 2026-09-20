@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import userIcon from '../../../assets/img/apip/username.png'
-import keyPassword from '../../../assets/img/apip/key-password.png'
-import warningLogin from '../../../assets/img/apip/warning.png'
-import visibilityIcon from '../../../assets/img/apip/visibility.png'
+import userIcon from '../../../assets/img/icon/username.png'
+import keyPassword from '../../../assets/img/icon/key-password.png'
+import warningLogin from '../../../assets/img/icon/warning.png'
+import visibilityIcon from '../../../assets/img/icon/visibility.png'
 
 const Login = () => {
   const navigate = useNavigate()
