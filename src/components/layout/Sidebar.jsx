@@ -86,7 +86,12 @@ const SidebarSection = ({ title, isOpen, onToggle, children }) => {
         className="flex w-full items-center justify-between border-b border-[#9b7bd1]/60 px-4 py-3 text-left text-base text-[#f0e7ff] transition-colors hover:text-white"
       >
         <span>{title}</span>
-        <span className={`text-sm transition-transform ${isOpen ? 'rotate-180' : ''}`}>⌄</span>
+        <span
+          aria-hidden="true"
+          className={`h-2.5 w-2.5 border-b-2 border-r-2 border-current transition-transform ${
+            isOpen ? 'rotate-45' : '-rotate-45'
+          }`}
+        />
       </button>
       {isOpen && <div className="space-y-2 py-3 pl-2">{children}</div>}
     </section>
