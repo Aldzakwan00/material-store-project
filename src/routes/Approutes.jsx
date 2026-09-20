@@ -4,6 +4,7 @@ import Login from '../features/auth/pages/Login'
 import Dashboard from '../features/dashboard/pages/Dashboard'
 import NotFound from '../features/not-found/pages/NotFound'
 import SuratJalan from '../features/surat-jalan/pages/SuratJalan'
+import AppLayout from '../components/layout/AppLayout'
 import ProtectedRoute from './ProtectedRoutes'
 
 const AppRoutes = () => {
@@ -14,9 +15,11 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/surat-jalan" element={<SuratJalan />} />
-                <Route path="*" element={<NotFound />} />
+                <Route element={<AppLayout />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/surat-jalan" element={<SuratJalan />} />
+                    <Route path="*" element={<NotFound />} />
+                </Route>
             </Route>
         </Routes>
     )

@@ -11,10 +11,31 @@ const SidebarButton = ({ to, icon, children, end = false }) => {
           : 'text-[#c6a2f3] hover:bg-[#26004c] hover:text-white'
       }`}
     >
-      <span aria-hidden="true" className="flex h-7 w-7 shrink-0 justify-center">
-        {icon && <img src={icon} alt="" className="h-full w-full object-contain" />}
-      </span>
-      <span>{children}</span>
+      {({ isActive }) => (
+        <>
+          <span
+            aria-hidden="true"
+            className={`flex h-7 w-7 shrink-0 justify-center ${isActive ? 'text-white' : 'text-gray-300'}`}
+          >
+            {icon && (
+              <span
+                className="block h-full w-full bg-current"
+                style={{
+                  maskImage: `url(${icon})`,
+                  maskPosition: 'center',
+                  maskRepeat: 'no-repeat',
+                  maskSize: 'contain',
+                  WebkitMaskImage: `url(${icon})`,
+                  WebkitMaskPosition: 'center',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskSize: 'contain',
+                }}
+              />
+            )}
+          </span>
+          <span className={isActive ? 'text-white' : 'text-gray-300'}>{children}</span>
+        </>
+      )}
     </NavLink>
   )
 }

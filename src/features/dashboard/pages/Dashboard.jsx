@@ -1,11 +1,6 @@
-import Sidebar from '../../../components/layout/Sidebar'
-
 const Dashboard = () => {
   return (
-    <div className="flex min-h-screen bg-[#f7f5fb]">
-      <Sidebar />
-
-      <main className="ml-56 min-h-screen flex-1 px-8 py-7">
+    <main className="ml-56 min-h-screen bg-[#f7f5fb] px-8 py-7">
         <header className="mb-8 flex items-center justify-between">
           <div>
             <p className="mb-1 text-sm font-medium text-[#79549d]">Senin, 20 September 2026</p>
@@ -103,8 +98,7 @@ const Dashboard = () => {
             <p className="mt-4 text-xs text-purple-200">75% pengiriman sudah selesai</p>
           </div>
         </section>
-      </main>
-    </div>
+    </main>
   )
 }
 
