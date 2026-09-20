@@ -27,11 +27,11 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] font-poppins">
       <div className="w-96 rounded-lg bg-white p-8 shadow-md">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#6F00FF]">
+          <h1 className="text-xl font-bold text-[#6F00FF]">
             Selamat datang kembali!
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-1 text-xs text-black">
             Silahkan  masukkan username dan password          
           </p>
         </div>
