@@ -24,21 +24,19 @@ const Login = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-md">
-
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Welcome Back
+    <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] font-poppins">
+      <div className="rounded-lg bg-white shadow-md">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[#6F00FF]">
+            Selamat datang kembali!
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Silakan login untuk melanjutkan
+            Silahkan  masukkan username dan password          
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-
           <div>
             <label
               htmlFor="username"

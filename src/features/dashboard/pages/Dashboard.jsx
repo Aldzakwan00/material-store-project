@@ -1,10 +1,10 @@
 import React from 'react'
-import Navbar from '../../../components/layout/Navbar'
+import Sidebar from '../../../components/layout/Sidebar'
 
 const Dashboard = () => {
   return (
-    <div>
-      <Navbar />
+    <div className="flex min-h-screen bg-gray-100">
+      <Sidebar />
 
       <div>
         <h1>Dashboard</h1>
