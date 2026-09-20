@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import Loading from '../components/loading/Loading'
 
 const RouteLoading = () => {
   const location = useLocation()
@@ -12,7 +11,7 @@ const RouteLoading = () => {
 
     const timer = setTimeout(() => {
       setLoading(false)
-    }, 500)
+    }, 180)
 
     return () => clearTimeout(timer)
   }, [location.pathname])
@@ -21,7 +20,11 @@ const RouteLoading = () => {
     return null
   }
 
-  return <Loading />
+  return (
+    <div className="pointer-events-none fixed left-0 right-0 top-0 z-[60] h-1 overflow-hidden bg-purple-100">
+      <div className="h-full w-1/3 animate-pulse bg-[#7000ff]" />
+    </div>
+  )
 }
 
-export default RouteLoading;
+export default RouteLoading

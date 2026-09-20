@@ -8,14 +8,44 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background-color: #ffffff;
   color: #222222;
   font-family: 'Poppins', sans-serif;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-enter 220ms ease-out both;
+  pointer-events: none;
+}
+
+.page-transition > * {
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    animation: none;
+  }
 }
 
 button,
@@ -37,4 +67,12 @@ img {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
