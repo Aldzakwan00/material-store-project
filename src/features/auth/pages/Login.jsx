@@ -25,7 +25,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] font-poppins">
-      <div className="rounded-lg bg-white shadow-md">
+      <div className="w-96 rounded-lg bg-white p-8 shadow-md">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#6F00FF]">
             Selamat datang kembali!
