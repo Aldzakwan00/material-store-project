@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import userIcon from '../../../assets/img/apip/username.png'
 import keyPassword from '../../../assets/img/apip/key-password.png'
+import warningLogin from '../../../assets/img/apip/warning.png'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -33,8 +34,8 @@ const Login = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] font-poppins">
-      <div className="w-96 rounded-lg bg-white p-8 shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] px-4 font-poppins">
+      <div className="w-full max-w-96 rounded-lg bg-white p-6 shadow-md sm:p-8">
         <div className="mb-8">
           <h1 className="text-xl font-bold text-[#6F00FF]">
             Selamat datang kembali!
@@ -99,9 +100,10 @@ const Login = () => {
           </div>
 
           {error && (
-            <p className="text-sm text-red-500">
+            <div className="flex items-center text-sm text-red-500">
+              <img src={warningLogin} alt="Warning" className="mr-2 h-3 w-3" />
               {error}
-            </p>
+            </div>
           )}
 
           <button
