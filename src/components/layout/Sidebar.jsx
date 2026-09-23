@@ -24,12 +24,12 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="fixed left-0 top-0 flex h-screen w-56 flex-col bg-[#6E5CC2] text-white">
+    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-[#51448C] text-white">
       <div className="flex h-38 shrink-0 items-center justify-center bg-[#51448C] px-6">
         <h1 className="text-[25px] text-center font-bold">ADI KARYA UTAMA</h1>
       </div>
 
-      <nav className="flex-1 space-y-3 overflow-y-auto px-3 py-6">
+      <nav className="flex-1 space-y-3 rounded-t-lg bg-[#6E5CC2] overflow-y-auto px-3 py-6">
         <SidebarButton to="/dashboard" icon={customerIcon} end>
           Dashboard
         </SidebarButton>
@@ -64,7 +64,7 @@ const Sidebar = () => {
         </SidebarSection>
       </nav>
 
-      <div className="p-3">
+      <div className="p- bg-[#6E5CC2]">
         <button
           onClick={handleLogout}
           className="w-full rounded-lg px-4 py-3 text-left text-sm text-[#c6a2f3] transition hover:bg-[#26004c] hover:text-white"
@@ -83,7 +83,7 @@ const SidebarSection = ({ title, isOpen, onToggle, children }) => {
         type="button"
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="flex w-full items-center justify-between border-b border-[#9b7bd1]/60 px-4 py-3 text-left text-base text-[#f0e7ff] transition-colors hover:text-white"
+        className="flex w-full items-center justify-between border-b border-white/90 px-4 py-3 text-left text-base text-white transition-colors hover:text-white"
       >
         <span>{title}</span>
         <span
