@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import DataTable from '../../../components/table/DataTable'
 import customerIcon from '../../../assets/img/icon/customer_icon.png'
+import saveIcon from '../../../assets/img/icon/SaveIcon.png'
+import editIcon from '../../../assets/img/icon/EditIcon.png'
 
 const initialCustomers = [
   {
@@ -45,26 +47,57 @@ const CustomerPage = () => {
   const [customers, setCustomers] = useState(initialCustomers)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isFormClosing, setIsFormClosing] = useState(false)
-  const [formData, setFormData] = useState({ name: '', npwp: '', address: '' })
+  const [editingId, setEditingId] = useState(null)
+
+  const [formData, setFormData] = useState({
+    name: '',
+    npwp: '',
+    address: '',
+  })
   const [formError, setFormError] = useState('')
 
   const handleEdit = (id) => {
     const customer = customers.find((item) => item.id === id)
-    window.alert(`Edit customer: ${customer.name}`)
+
+    if (customer) {
+      setEditingId(customer.id)
+
+      setFormData({
+        name: customer.name,
+        npwp: customer.npwp,
+        address: customer.address,
+      })
+
+      setFormError('')
+      setIsFormOpen(true)
+    }
   }
 
   const handleFormChange = (event) => {
     const { name, value } = event.target
-    setFormData((currentData) => ({ ...currentData, [name]: value }))
+
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }))
+
     setFormError('')
   }
 
   const closeForm = () => {
     setIsFormClosing(true)
+
     window.setTimeout(() => {
       setIsFormOpen(false)
       setIsFormClosing(false)
-      setFormData({ name: '', npwp: '', address: '' })
+      setEditingId(null)
+
+      setFormData({
+        name: '',
+        npwp: '',
+        address: '',
+      })
+
       setFormError('')
     }, 360)
   }
@@ -72,30 +105,64 @@ const CustomerPage = () => {
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    if (!formData.name.trim() || !formData.npwp.trim() || !formData.address.trim()) {
+    if (
+      !formData.name.trim() ||
+      !formData.npwp.trim() ||
+      !formData.address.trim()
+    ) {
       setFormError('Kolom tidak boleh kosong')
       return
     }
 
-    setCustomers((currentCustomers) => [
-      ...currentCustomers,
-      { id: Date.now(), ...formData },
-    ])
+    if (editingId !== null) {
+      // Mode Edit
+      setCustomers((currentCustomers) =>
+        currentCustomers.map((customer) =>
+          customer.id === editingId
+            ? {
+                ...customer,
+                ...formData,
+              }
+            : customer
+        )
+      )
+    } else {
+      // Mode Tambah
+      setCustomers((currentCustomers) => [
+        ...currentCustomers,
+        {
+          id: Date.now(),
+          ...formData,
+        },
+      ])
+    }
+
     closeForm()
   }
 
   const columns = [
-    { key: 'name', label: 'Nama Customer' },
-    { key: 'npwp', label: 'No. NPWP' },
-    { key: 'address', label: 'Alamat' },
+    {
+      key: 'name',
+      label: 'Nama Customer',
+    },
+    {
+      key: 'npwp',
+      label: 'No. NPWP',
+    },
+    {
+      key: 'address',
+      label: 'Alamat',
+    },
   ]
 
   return (
-    <main className="ml-64 min-h-screen bg-white px-8 py-10">
-      <div className="mb-6 flex items-center gap-3">
+    <main className="min-h-screen bg-white px-4 py-6 sm:px-6 sm:py-8 lg:ml-64 lg:px-8 lg:py-10">
+
+      {/* HEADER */}
+      <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
         <span
           aria-hidden="true"
-          className="h-9 w-9 bg-[#51448C]"
+          className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-9 sm:w-9"
           style={{
             maskImage: `url(${customerIcon})`,
             maskPosition: 'center',
@@ -107,50 +174,87 @@ const CustomerPage = () => {
             WebkitMaskSize: 'contain',
           }}
         />
-        <h1 className="text-3xl font-bold text-[#51448C]">DATA CUSTOMER</h1>
+
+        <h1 className="text-xl font-bold text-[#51448C] sm:text-2xl lg:text-3xl">
+          DATA CUSTOMER
+        </h1>
       </div>
 
-      <section className="rounded-2xl border border-[#d9d9df] bg-[#f5f5f6] p-4 shadow-sm">
+      {/* TABLE CONTAINER */}
+      <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
+
+        {/* ADD BUTTON */}
         <button
           type="button"
-          onClick={() => setIsFormOpen(true)}
-          className="mb-3 rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-sm font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff]"
+          onClick={() => {
+            setEditingId(null)
+
+            setFormData({
+              name: '',
+              npwp: '',
+              address: '',
+            })
+
+            setFormError('')
+            setIsFormOpen(true)
+          }}
+          className="mb-3 inline-flex items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] sm:text-sm"
         >
-          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">+</span>
+          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">
+            +
+          </span>
+
           Tambah Data
         </button>
 
-        <DataTable
-          columns={columns}
-          data={customers}
-          actionLabel="Action"
-          tableClassName="text-sm"
-          actions={(row) => (
-            <button
-              type="button"
-              onClick={() => handleEdit(row.id)}
-              className="rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
-            >
-              <span aria-hidden="true" className="mr-1">↗</span>
-              Edit
-            </button>
-          )}
-        />
+        {/* TABLE WRAPPER */}
+        <div className="w-full overflow-x-auto">
+          <DataTable
+            columns={columns}
+            data={customers}
+            actionLabel="Action"
+            tableClassName="text-xs sm:text-sm min-w-[650px]"
+            actions={(row) => (
+              <button
+                type="button"
+                onClick={() => handleEdit(row.id)}
+                className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
+              >
+                <img
+                  src={editIcon}
+                  alt=""
+                  className="mr-2 h-3.5 w-3.5 object-contain"
+                />
+                Edit
+              </button>
+            )}
+          />
+        </div>
       </section>
 
+      {/* MODAL */}
       {isFormOpen && (
-        <div className={`modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/10 px-4 ${isFormClosing ? 'modal-backdrop-closing' : ''}`}>
+        <div
+          className={`modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/10 px-4 ${
+            isFormClosing ? 'modal-backdrop-closing' : ''
+          }`}
+        >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="customer-form-title"
-            className={`modal-panel w-full max-w-md rounded-xl bg-[#f7f7f7] p-5 shadow-[0_5px_18px_rgba(0,0,0,0.18)] ${isFormClosing ? 'modal-panel-closing' : ''}`}
+            className={`modal-panel w-full max-w-md rounded-xl bg-[#f7f7f7] p-4 shadow-[0_5px_18px_rgba(0,0,0,0.18)] sm:p-5 ${
+              isFormClosing ? 'modal-panel-closing' : ''
+            }`}
           >
-            <div className="mb-1 flex items-start justify-between">
-              <div className="flex items-center gap-2">
+
+            {/* MODAL HEADER */}
+            <div className="mb-1 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+
                 <span
                   aria-hidden="true"
-                  className="h-8 w-8 bg-[#51448C]"
+                  className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-8 sm:w-8"
                   style={{
                     maskImage: `url(${customerIcon})`,
                     maskPosition: 'center',
@@ -162,64 +266,104 @@ const CustomerPage = () => {
                     WebkitMaskSize: 'contain',
                   }}
                 />
-                <h2 id="customer-form-title" className="text-lg font-bold text-[#51448C]">
+
+                <h2
+                  id="customer-form-title"
+                  className="text-sm font-bold leading-tight text-[#51448C] sm:text-lg"
+                >
                   INPUT &amp; EDIT DATA CUSTOMER
                 </h2>
               </div>
+
               <button
                 type="button"
                 onClick={closeForm}
                 aria-label="Tutup form"
-                className="text-2xl leading-none text-[#51448C] transition hover:text-[#33295f]"
+                className="shrink-0 text-2xl leading-none text-[#51448C] transition hover:text-[#33295f]"
               >
                 ×
               </button>
             </div>
 
-            <p className="mb-2 text-[10px] text-black">Silahkan masukkan data diri customer</p>
+            <p className="mb-3 text-[10px] text-black sm:mb-2">
+              Silahkan masukkan data diri customer
+            </p>
 
+            {/* FORM */}
             <form onSubmit={handleSubmit}>
-              <label className="mb-1 block text-xs text-black" htmlFor="customer-name">Nama</label>
+
+              {/* NAME */}
+              <label
+                className="mb-1 block text-xs text-black"
+                htmlFor="customer-name"
+              >
+                Nama
+              </label>
+
               <input
                 id="customer-name"
                 name="name"
                 value={formData.name}
                 onChange={handleFormChange}
                 placeholder="Masukkan nama"
-                className="mb-2.5 h-8 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="mb-2.5 h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
               />
 
-              <label className="mb-1 block text-xs text-black" htmlFor="customer-npwp">No. NPWP</label>
+              {/* NPWP */}
+              <label
+                className="mb-1 block text-xs text-black"
+                htmlFor="customer-npwp"
+              >
+                No. NPWP
+              </label>
+
               <input
                 id="customer-npwp"
                 name="npwp"
                 value={formData.npwp}
                 onChange={handleFormChange}
                 placeholder="Masukkan No. NPWP"
-                className="mb-2.5 h-8 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="mb-2.5 h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
               />
 
-              <label className="mb-1 block text-xs text-black" htmlFor="customer-address">Alamat</label>
+              {/* ADDRESS */}
+              <label
+                className="mb-1 block text-xs text-black"
+                htmlFor="customer-address"
+              >
+                Alamat
+              </label>
+
               <input
                 id="customer-address"
                 name="address"
                 value={formData.address}
                 onChange={handleFormChange}
                 placeholder="Masukkan alamat"
-                className="h-8 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
               />
 
+              {/* ERROR */}
               {formError && (
                 <p className="mt-1.5 text-[10px] text-red-500">
-                  <span aria-hidden="true" className="mr-1">⚠</span>{formError}
+                  <span aria-hidden="true" className="mr-1">
+                    ⚠
+                  </span>
+                  {formError}
                 </p>
               )}
 
+              {/* SAVE BUTTON */}
               <button
                 type="submit"
-                className="mt-2.5 rounded-md bg-[#51448C] px-3 py-1.5 text-[10px] font-medium text-white transition hover:bg-[#433878]"
+                className="mt-3 flex items-center rounded-md bg-[#51448C] px-3 py-2 text-[10px] font-medium text-white transition hover:bg-[#433878]"
               >
-                <span aria-hidden="true" className="mr-1">▣</span>
+                <img
+                  src={saveIcon}
+                  alt=""
+                  className="mr-2 h-3.5 w-3.5 object-contain"
+                />
+
                 Simpan Data
               </button>
             </form>

@@ -10,6 +10,7 @@ import suratJalanIcon from '../../assets/img/icon/surat_jalan_icon.png'
 
 const Sidebar = () => {
   const [openSection, setOpenSection] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const navigate = useNavigate()
 
   const toggleSection = (section) => {
@@ -24,7 +25,31 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-[#51448C] text-white">
+    <>
+      {!isSidebarOpen && (
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-4 z-40 rounded-lg bg-[#51448C] p-2.5 text-white shadow-md transition hover:bg-[#433878] lg:hidden"
+          aria-label="Buka menu"
+        >
+          <span className="block h-0.5 w-5 bg-white" />
+          <span className="my-1.5 block h-0.5 w-5 bg-white" />
+          <span className="block h-0.5 w-5 bg-white" />
+        </button>
+      )}
+      <aside
+      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-[#51448C] text-white transition-transform duration-300 lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <button
+        type="button"
+        onClick={() => setIsSidebarOpen(false)}
+        className="absolute right-4 top-4 text-2xl leading-none text-white lg:hidden"
+        aria-label="Tutup menu"
+      >
+        ×
+      </button>
       <div className="flex h-38 shrink-0 items-center justify-center bg-[#51448C] px-6">
         <h1 className="text-[25px] text-center font-bold">ADI KARYA UTAMA</h1>
       </div>
@@ -73,6 +98,8 @@ const Sidebar = () => {
         </button>
       </div>
     </aside>
+    </>
+    
   )
 }
 
