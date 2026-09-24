@@ -4,6 +4,7 @@ import Login from '../features/auth/pages/Login'
 import Dashboard from '../features/dashboard/pages/Dashboard'
 import CustomerPage from '../features/customer/pages/CustomerPage'
 import DriverPage from '../features/driver/pages/DriverPage'
+import MaterialPage from '../features/material/pages/MaterialPage'
 import NotFound from '../features/not-found/pages/NotFound'
 import SuratJalan from '../features/surat-jalan/pages/SuratJalan'
 import AppLayout from '../components/layout/AppLayout'
@@ -21,6 +22,7 @@ const AppRoutes = () => {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/data-customer" element={<CustomerPage />} />
                     <Route path="/data-driver" element={<DriverPage />} />
+                    <Route path="/data-material" element={<MaterialPage />} />
                     <Route path="/surat-jalan" element={<SuratJalan />} />
                     <Route path="*" element={<NotFound />} />
                 </Route>
