@@ -60,6 +60,20 @@ const DriverPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isFormClosing, setIsFormClosing] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [search, setSearch] = useState('')
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+
+  const [filterData, setFilterData] = useState({
+    startDate: '',
+    endDate: '',
+  })
+
+  const [appliedFilter, setAppliedFilter] = useState({
+    startDate: '',
+    endDate: '',
+  })
+
 
   const [formData, setFormData] = useState({
     code: '',
@@ -85,20 +99,9 @@ const DriverPage = () => {
     return `D-${String(lastNumber + 1).padStart(3, '0')}`
   }
 
-    const [isFilterOpen, setIsFilterOpen] = useState(false)
-
-    const [filterData, setFilterData] = useState({
-    startDate: '',
-    endDate: '',
-    })
-
-    const [appliedFilter, setAppliedFilter] = useState({
-    startDate: '',
-    endDate: '',
-    })
-
     const handleApplyFilter = () => {
-        setAppliedFilter(filterData)
+      setAppliedFilter(filterData)
+      setIsFilterOpen(false)
     }
 
 
@@ -246,113 +249,163 @@ const DriverPage = () => {
         <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
 
         {/* Top Action */}
-        <div className="mb-3 flex items-start justify-between gap-3">
-
+          <div className="mb-3 flex items-center justify-between gap-3">
             {/* Tambah Data */}
             <button
-            type="button"
-            onClick={() => {
-            setEditingId(null)
+              type="button"
+              onClick={() => {
+                setEditingId(null)
 
-            setFormData({
-                code: getNextDriverCode(),
-                name: '',
-                plateNumber: '',
-                address: '',
-                delivery: '',
-            })
+                setFormData({
+                  code: getNextDriverCode(),
+                  name: '',
+                  plateNumber: '',
+                  address: '',
+                  delivery: '',
+                })
 
-            setFormError('')
-            setIsFormOpen(true)
-            }}
-            className="inline-flex shrink-0 items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] sm:text-sm"
+                setFormError('')
+                setIsFormOpen(true)
+              }}
+              className="inline-flex shrink-0 items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] sm:text-sm"
             >
-            <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">
+              <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">
                 +
-            </span>
+              </span>
 
-            Tambah Data
+              Tambah Data
             </button>
 
-            {/* Filter */}
-            <button
-            type="button"
-            onClick={() => setIsFilterOpen((current) => !current)}
-            className="inline-flex shrink-0 items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] sm:text-sm"
-            >
-            <span className="mr-2">
-                ⚙
-            </span>
+            {/* Filter + Search */}
+            <div className="relative flex items-center gap-2">
 
-            Filter
-            </button>
-        </div>
+              {/* Filter Wrapper */}
+              <div className="relative">
 
-        {/* Filter Form */}
-        {isFilterOpen && (
-            <div className="mb-4 rounded-lg border border-[#dedee5] bg-white p-3 sm:p-4">
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-                {/* Tanggal Mulai */}
-                <div>
-                <label
-                    htmlFor="start-date"
-                    className="mb-1.5 block text-xs font-medium text-black"
-                >
-                    Tanggal Mulai
-                </label>
-
-                <input
-                    id="start-date"
-                    type="date"
-                    value={filterData.startDate}
-                    onChange={(event) =>
-                    setFilterData((current) => ({
-                        ...current,
-                        startDate: event.target.value,
-                    }))
-                    }
-                    className="h-9 w-full rounded-lg border border-[#d9d9df] bg-white px-3 text-xs text-black outline-none ring-[#51448C] focus:ring-2"
-                />
-                </div>
-
-                {/* Tanggal Sampai */}
-                <div>
-                <label
-                    htmlFor="end-date"
-                    className="mb-1.5 block text-xs font-medium text-black"
-                >
-                    Tanggal Sampai
-                </label>
-
-                <input
-                    id="end-date"
-                    type="date"
-                    value={filterData.endDate}
-                    onChange={(event) =>
-                    setFilterData((current) => ({
-                        ...current,
-                        endDate: event.target.value,
-                    }))
-                    }
-                    className="h-9 w-full rounded-lg border border-[#d9d9df] bg-white px-3 text-xs text-black outline-none ring-[#51448C] focus:ring-2"
-                />
-                </div>
-            </div>
-
-            {/* Terapkan */}
-            <div className="mt-3">
+                {/* Filter Button */}
                 <button
-                type="button"
-                onClick={handleApplyFilter}
-                className="rounded-md bg-[#51448C] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#433878]"
+                  type="button"
+                  onClick={() => {
+                    if (isFilterOpen) {
+                      handleApplyFilter()
+                    } else {
+                      setIsFilterOpen(true)
+                    }
+                  }}
+                  className={`inline-flex h-10 shrink-0 items-center rounded-md border px-3 text-xs font-medium shadow-sm transition-all duration-200 sm:text-sm ${
+                    isFilterOpen
+                      ? 'border-[#51448C] bg-[#51448C] text-white hover:bg-[#453a7a]'
+                      : 'border-[#e0e0e5] bg-white text-[#51448C] hover:bg-[#f8f6ff]'
+                  }`}
                 >
-                Terapkan
+                  <span className="mr-2 text-sm">
+                    {isFilterOpen ? '✓' : '⚙'}
+                  </span>
+
+                  {isFilterOpen ? 'Terapkan' : 'Filter'}
                 </button>
+
+                {/* Filter Popup */}
+                <div
+                  className={`absolute right-0 bottom-[calc(100%+8px)] z-30 w-[450px] origin-bottom rounded-lg border border-[#e0e0e5] bg-white p-4 shadow-[0_4px_15px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out ${
+                    isFilterOpen
+                      ? 'translate-y-0 scale-100 opacity-100'
+                      : 'pointer-events-none translate-y-3 scale-95 opacity-0'
+                  }`}
+                >
+
+                  {/* Date Inputs */}
+                  <div className="flex items-end gap-3">
+
+                    {/* Tanggal Mulai */}
+                    <div className="flex-1">
+                      <label
+                        htmlFor="start-date"
+                        className="mb-1 block text-[10px] font-semibold text-[#51448C]"
+                      >
+                        Tanggal Mulai
+                      </label>
+
+                      <input
+                        id="start-date"
+                        type="date"
+                        value={filterData.startDate}
+                        onChange={(event) =>
+                          setFilterData((current) => ({
+                            ...current,
+                            startDate: event.target.value,
+                          }))
+                        }
+                        className="h-9 w-full rounded-md border border-[#dedee5] bg-white px-2 text-xs text-[#555] outline-none transition focus:border-[#51448C]"
+                      />
+                    </div>
+
+                    {/* Panah */}
+                    <div className="mb-2 text-lg text-[#51448C]">
+                      ↕
+                    </div>
+
+                    {/* Tanggal Sampai */}
+                    <div className="flex-1">
+                      <label
+                        htmlFor="end-date"
+                        className="mb-1 block text-[10px] font-semibold text-[#51448C]"
+                      >
+                        Tanggal Sampai
+                      </label>
+
+                      <input
+                        id="end-date"
+                        type="date"
+                        value={filterData.endDate}
+                        onChange={(event) =>
+                          setFilterData((current) => ({
+                            ...current,
+                            endDate: event.target.value,
+                          }))
+                        }
+                        className="h-9 w-full rounded-md border border-[#dedee5] bg-white px-2 text-xs text-[#555] outline-none transition focus:border-[#51448C]"
+                      />
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Search */}
+              <div className="flex h-10 w-48 items-center rounded-md border border-[#e0e0e5] bg-white px-3 shadow-sm transition-all duration-200 focus-within:border-[#51448C]">
+
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 shrink-0 text-[#51448C]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0Z"
+                  />
+                </svg>
+
+                <div className="group relative ml-2">
+                  <input
+                    type="search"
+                    placeholder="Search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-6 w-24 bg-transparent text-sm text-[#51448C] outline-none placeholder:text-[#51448C]"
+                  />
+
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-0 rounded-full bg-[#51448C] transition-all duration-300 group-focus-within:w-full" />
+                </div>
+
+              </div>
+
             </div>
-            </div>
-        )}
+          </div>
 
         {/* Responsive Table */}
         <div className="w-full overflow-x-auto">

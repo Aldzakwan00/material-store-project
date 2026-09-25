@@ -48,6 +48,7 @@ const CustomerPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isFormClosing, setIsFormClosing] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [search, setSearch] = useState('')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -184,28 +185,67 @@ const CustomerPage = () => {
       <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
 
         {/* ADD BUTTON */}
-        <button
-          type="button"
-          onClick={() => {
-            setEditingId(null)
+        <div className="mb-4 flex items-center justify-between gap-4">
+          {/* Button Tambah Data */}
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null)
 
-            setFormData({
-              name: '',
-              npwp: '',
-              address: '',
-            })
+              setFormData({
+                name: '',
+                npwp: '',
+                address: '',
+              })
 
-            setFormError('')
-            setIsFormOpen(true)
-          }}
-          className="mb-3 inline-flex items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] sm:text-sm"
-        >
-          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">
-            +
-          </span>
+              setFormError('')
+              setIsFormOpen(true)
+            }}
+            className="inline-flex items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-sm font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff]"
+          >
+            <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#51448C] text-sm font-bold text-white">
+              +
+            </span>
 
-          Tambah Data
-        </button>
+            Tambah Data
+          </button>
+
+          {/* Search */}
+          <div className="w-48">
+            <div className="flex items-center rounded-md border border-[#e0e0e5] bg-white px-3">
+              {/* Icon Search */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-[#51448C]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                />
+              </svg>
+
+              {/* Search */}
+              <div className="group relative ml-2">
+                <input
+                  type="search"
+                  placeholder="Search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 w-20 bg-transparent text-sm text-[#51448C] outline-none placeholder:text-[#51448C]"
+                />
+
+                {/* Garis hanya di bawah tulisan Search */}
+                <span className="absolute bottom-1 left-0 h-[2px] w-0 rounded-full bg-[#51448C] transition-all duration-300 group-focus-within:w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
 
         {/* TABLE WRAPPER */}
         <div className="w-full overflow-x-auto">
