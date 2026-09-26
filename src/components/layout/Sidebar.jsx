@@ -67,6 +67,7 @@ const Sidebar = () => {
           <SidebarButton to="/data-material" icon={materialIcon}>Data Material</SidebarButton>
           <SidebarButton to="/data-driver" icon={driverIcon}>Data Driver</SidebarButton>
           <SidebarButton to="/data-customer" icon={customerIcon}>Data Customer</SidebarButton>
+          <SidebarButton to="/data-project" icon={customerIcon}>Data Project</SidebarButton>
         </SidebarSection>
 
         <SidebarSection

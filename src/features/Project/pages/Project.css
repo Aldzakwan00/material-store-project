@@ -1,0 +1,41 @@
+/* ================================
+   TABLE PROJECT
+================================ */
+
+.project-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #51448c #e9e7f0;
+}
+
+/* Paksa isi tabel lebih lebar dari container */
+.project-table-inner {
+  min-width: 1200px;
+}
+
+/* ================================
+   CUSTOM SCROLLBAR
+================================ */
+
+.project-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.project-table-wrapper::-webkit-scrollbar-track {
+  background: #e9e7f0;
+  border-radius: 999px;
+}
+
+.project-table-wrapper::-webkit-scrollbar-thumb {
+  background: #51448c;
+  border-radius: 999px;
+}
+
+.project-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #433878;
+}
