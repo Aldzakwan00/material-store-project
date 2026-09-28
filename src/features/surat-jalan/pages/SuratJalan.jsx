@@ -8,8 +8,6 @@ const SuratJalan = () => {
                     Input Surat Jalan
                 </h1>
             </div>
-
-            
         </div>
 
         {/* Surat Jalan data */}
