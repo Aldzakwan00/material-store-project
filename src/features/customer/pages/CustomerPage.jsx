@@ -1,62 +1,65 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DataTable from '../../../components/table/DataTable'
 import customerIcon from '../../../assets/img/icon/customer_icon.png'
 import saveIcon from '../../../assets/img/icon/SaveIcon.png'
 import editIcon from '../../../assets/img/icon/EditIcon.png'
-
-const initialCustomers = [
-  {
-    id: 1,
-    name: 'Budi Santoso',
-    npwp: '12.345.678.9-123.000',
-    address: 'Jl. Ijen No. 12, Malang',
-  },
-  {
-    id: 2,
-    name: 'Siti Aminah',
-    npwp: '98.765.432.1-098.000',
-    address: 'Jl. Soekarno Hatta No. 45, Malang',
-  },
-  {
-    id: 3,
-    name: 'Aditya Pratama',
-    npwp: '45.678.901.2-345.000',
-    address: 'Jl. Veteran No. 8, Malang',
-  },
-  {
-    id: 4,
-    name: 'Rina Melati',
-    npwp: '87.654.321.0-876.000',
-    address: 'Jl. Kawi No. 21, Malang',
-  },
-  {
-    id: 5,
-    name: 'Agus Wijaya',
-    npwp: '23.456.789.0-234.000',
-    address: 'Jl. MT Haryono No. 112, Malang',
-  },
-  {
-    id: 6,
-    name: 'Dewi Lestari',
-    npwp: '76.543.210.9-765.000',
-    address: 'Jl. Tlogomas No. 50, Malang',
-  },
-]
+import Swal from 'sweetalert2'
+import {
+  getCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer
+} from '../../../services/CustomerServices'
 
 const CustomerPage = () => {
-  const [customers, setCustomers] = useState(initialCustomers)
+  const [customers, setCustomers] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isFormClosing, setIsFormClosing] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [search, setSearch] = useState('')
 
   const [formData, setFormData] = useState({
+    id: null,
+    kode: '',
     name: '',
     npwp: '',
     address: '',
   })
+
   const [formError, setFormError] = useState('')
 
+  // GET DATA CUSTOMER
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setIsLoading(true)
+        setError('')
+
+        const data = await getCustomers()
+
+        const formattedCustomers = data.items.map((customer) => ({
+          id: customer.id,
+          kode: customer.kode,
+          name: customer.nama_customer,
+          npwp: customer.no_npwp || '',
+          address: customer.alamat || '',
+        }))
+
+        setCustomers(formattedCustomers)
+      } catch (error) {
+        setError(error.message || 'Gagal mengambil data customer')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCustomers()
+  }, [])
+
+  // EDIT DATA
   const handleEdit = (id) => {
     const customer = customers.find((item) => item.id === id)
 
@@ -64,6 +67,8 @@ const CustomerPage = () => {
       setEditingId(customer.id)
 
       setFormData({
+        id: customer.id,
+        kode: customer.kode,
         name: customer.name,
         npwp: customer.npwp,
         address: customer.address,
@@ -74,6 +79,7 @@ const CustomerPage = () => {
     }
   }
 
+  // FORM CHANGE
   const handleFormChange = (event) => {
     const { name, value } = event.target
 
@@ -85,6 +91,7 @@ const CustomerPage = () => {
     setFormError('')
   }
 
+  // CLOSE MODAL
   const closeForm = () => {
     setIsFormClosing(true)
 
@@ -94,6 +101,8 @@ const CustomerPage = () => {
       setEditingId(null)
 
       setFormData({
+        id: null,
+        kode: '',
         name: '',
         npwp: '',
         address: '',
@@ -103,43 +112,155 @@ const CustomerPage = () => {
     }, 360)
   }
 
-  const handleSubmit = (event) => {
+  // SUBMIT FORM
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (
-      !formData.name.trim() ||
-      !formData.npwp.trim() ||
-      !formData.address.trim()
-    ) {
-      setFormError('Kolom tidak boleh kosong')
+    if (!formData.name.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data belum lengkap',
+        text: 'Nama customer wajib diisi',
+        confirmButtonColor: '#51448C',
+      })
       return
     }
 
-    if (editingId !== null) {
-      // Mode Edit
-      setCustomers((currentCustomers) =>
-        currentCustomers.map((customer) =>
-          customer.id === editingId
-            ? {
-                ...customer,
-                ...formData,
-              }
-            : customer
+    try {
+      setFormError('')
+
+      // EDIT CUSTOMER
+      if (editingId !== null) {
+        const updatedCustomer = await updateCustomer(editingId, {
+          id: formData.id,
+          kode: formData.kode,
+          nama_customer: formData.name,
+          no_npwp: formData.npwp || null,
+          alamat: formData.address || null,
+        })
+
+        setCustomers((currentCustomers) =>
+          currentCustomers.map((customer) =>
+            customer.id === editingId
+              ? {
+                  id: updatedCustomer.id,
+                  kode: updatedCustomer.kode,
+                  name: updatedCustomer.nama_customer,
+                  npwp: updatedCustomer.no_npwp || '',
+                  address: updatedCustomer.alamat || '',
+                }
+              : customer,
+          ),
         )
-      )
-    } else {
-      // Mode Tambah
+
+        closeForm()
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data customer berhasil diperbarui',
+          confirmButtonColor: '#51448C',
+        })
+
+        return
+      }
+
+      // TAMBAH CUSTOMER
+      const newCustomer = await createCustomer({
+        nama_customer: formData.name,
+        no_npwp: formData.npwp || null,
+        alamat: formData.address || null,
+      })
+
       setCustomers((currentCustomers) => [
         ...currentCustomers,
         {
-          id: Date.now(),
-          ...formData,
+          id: newCustomer.id,
+          kode: newCustomer.kode,
+          name: newCustomer.nama_customer,
+          npwp: newCustomer.no_npwp || '',
+          address: newCustomer.alamat || '',
         },
       ])
+
+      closeForm()
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data customer berhasil ditambahkan',
+        confirmButtonColor: '#51448C',
+      })
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text:
+          error.message ||
+          (editingId !== null
+            ? 'Gagal memperbarui customer'
+            : 'Gagal menambahkan customer'),
+        confirmButtonColor: '#51448C',
+      })
+    }
+  }
+
+  // DELETE DATA
+  const handleDelete = async (id) => {
+    const customer = customers.find((item) => item.id === id)
+
+    if (!customer) {
+      return
     }
 
-    closeForm()
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Hapus data customer?',
+      text: `Data "${customer.name}" akan dihapus secara permanen.`,
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#51448C',
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
+    try {
+      await deleteCustomer(id)
+
+      setCustomers((currentCustomers) =>
+        currentCustomers.filter((customer) => customer.id !== id),
+      )
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data customer berhasil dihapus',
+        confirmButtonColor: '#51448C',
+      })
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: error.message || 'Gagal menghapus customer',
+        confirmButtonColor: '#51448C',
+      })
+    }
   }
+
+  // SEARCH
+  const filteredCustomers = customers.filter((customer) => {
+    const searchValue = search.toLowerCase()
+
+    return (
+      customer.name.toLowerCase().includes(searchValue) ||
+      customer.npwp.toLowerCase().includes(searchValue) ||
+      customer.address.toLowerCase().includes(searchValue)
+    )
+  })
 
   const columns = [
     {
@@ -158,7 +279,6 @@ const CustomerPage = () => {
 
   return (
     <main className="min-h-screen bg-white px-4 py-6 sm:px-6 sm:py-8 lg:ml-64 lg:px-8 lg:py-10">
-
       {/* HEADER */}
       <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
         <span
@@ -183,16 +303,17 @@ const CustomerPage = () => {
 
       {/* TABLE CONTAINER */}
       <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
-
-        {/* ADD BUTTON */}
+        {/* TOP BAR */}
         <div className="mb-4 flex items-center justify-between gap-4">
-          {/* Button Tambah Data */}
+          {/* TAMBAH DATA */}
           <button
             type="button"
             onClick={() => {
               setEditingId(null)
 
               setFormData({
+                id: null,
+                kode: '',
                 name: '',
                 npwp: '',
                 address: '',
@@ -210,10 +331,9 @@ const CustomerPage = () => {
             Tambah Data
           </button>
 
-          {/* Search */}
+          {/* SEARCH */}
           <div className="w-48">
             <div className="flex items-center rounded-md border border-[#e0e0e5] bg-white px-3">
-              {/* Icon Search */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4 text-[#51448C]"
@@ -229,7 +349,6 @@ const CustomerPage = () => {
                 />
               </svg>
 
-              {/* Search */}
               <div className="group relative ml-2">
                 <input
                   type="search"
@@ -239,36 +358,60 @@ const CustomerPage = () => {
                   className="h-10 w-20 bg-transparent text-sm text-[#51448C] outline-none placeholder:text-[#51448C]"
                 />
 
-                {/* Garis hanya di bawah tulisan Search */}
                 <span className="absolute bottom-1 left-0 h-[2px] w-0 rounded-full bg-[#51448C] transition-all duration-300 group-focus-within:w-full" />
               </div>
             </div>
           </div>
         </div>
-        
 
-        {/* TABLE WRAPPER */}
+        {/* ERROR GET */}
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-500">
+            {error}
+          </div>
+        )}
+
+        {/* TABLE */}
         <div className="w-full overflow-x-auto">
-          <DataTable
-            columns={columns}
-            data={customers}
-            actionLabel="Action"
-            tableClassName="text-xs sm:text-sm min-w-[650px]"
-            actions={(row) => (
-              <button
-                type="button"
-                onClick={() => handleEdit(row.id)}
-                className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
-              >
-                <img
-                  src={editIcon}
-                  alt=""
-                  className="mr-2 h-3.5 w-3.5 object-contain"
-                />
-                Edit
-              </button>
-            )}
-          />
+          {isLoading ? (
+            <div className="py-10 text-center text-sm text-gray-500">
+              Memuat data customer...
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredCustomers}
+              actionLabel="Action"
+              tableClassName="text-xs sm:text-sm min-w-[650px]"
+              actions={(row) => (
+                <div className="flex items-center gap-2">
+                  {/* EDIT */}
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(row.id)}
+                    className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
+                  >
+                    <img
+                      src={editIcon}
+                      alt=""
+                      className="mr-2 h-3.5 w-3.5 object-contain"
+                    />
+
+                    Edit
+                  </button>
+
+                  {/* DELETE */}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(row.id)}
+                    className="flex items-center whitespace-nowrap rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            />
+          )}
         </div>
       </section>
 
@@ -287,11 +430,9 @@ const CustomerPage = () => {
               isFormClosing ? 'modal-panel-closing' : ''
             }`}
           >
-
             {/* MODAL HEADER */}
             <div className="mb-1 flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-
                 <span
                   aria-hidden="true"
                   className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-8 sm:w-8"
@@ -331,7 +472,6 @@ const CustomerPage = () => {
 
             {/* FORM */}
             <form onSubmit={handleSubmit}>
-
               {/* NAME */}
               <label
                 className="mb-1 block text-xs text-black"
@@ -393,7 +533,7 @@ const CustomerPage = () => {
                 </p>
               )}
 
-              {/* SAVE BUTTON */}
+              {/* SAVE */}
               <button
                 type="submit"
                 className="mt-3 flex items-center rounded-md bg-[#51448C] px-3 py-2 text-[10px] font-medium text-white transition hover:bg-[#433878]"

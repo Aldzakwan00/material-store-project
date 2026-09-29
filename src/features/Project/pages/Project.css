@@ -1,6 +1,4 @@
-/* ================================
-   TABLE PROJECT
-================================ */
+
 
 .project-table-wrapper {
   width: 100%;
@@ -8,19 +6,14 @@
   overflow-y: hidden;
   padding-bottom: 8px;
 
-  /* Firefox */
   scrollbar-width: thin;
   scrollbar-color: #51448c #e9e7f0;
 }
 
-/* Paksa isi tabel lebih lebar dari container */
 .project-table-inner {
   min-width: 1200px;
 }
 
-/* ================================
-   CUSTOM SCROLLBAR
-================================ */
 
 .project-table-wrapper::-webkit-scrollbar {
   height: 8px;

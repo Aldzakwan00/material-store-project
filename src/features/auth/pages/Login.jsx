@@ -5,34 +5,47 @@ import keyPassword from '../../../assets/img/icon/key-password.png'
 import warningLogin from '../../../assets/img/icon/warning.png'
 import visibilityIcon from '../../../assets/img/icon/visibility.png'
 import invisibilityIcon from '../../../assets/img/icon/invisibility.png'
+import { login } from '../../../services/AuthServices'
 
 const Login = () => {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
 
+  const [showPassword, setShowPassword] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  const handleLogin = (e) => {
-    e.preventDefault()
+  const handleLogin = async (e) => {
+  e.preventDefault()
 
-    const dummyEmail = 'admin'
-    const dummyPassword = '123456'
+  setError('')
 
-    if (!username && !password) {
-      setError('Username dan password wajib diisi')
-    } else if (!username) {
-      setError('Username wajib diisi')
-    } else if (!password) {
-      setError('Password wajib diisi')
-    } else if (username !== dummyEmail || password !== dummyPassword) {
-      setError('Username atau password salah')
-    } else {
-      sessionStorage.setItem('isLoggedIn', 'true')
-      navigate('/dashboard')
-    }
+  if (!username && !password) {
+    setError('Username dan password wajib diisi')
+    return
   }
+
+  if (!username) {
+    setError('Username wajib diisi')
+    return
+  }
+
+  if (!password) {
+    setError('Password wajib diisi')
+    return
+  }
+
+  try {
+    const data = await login(username, password)
+
+    sessionStorage.setItem('isLoggedIn', 'true')
+    sessionStorage.setItem('token', data.access_token)
+
+    navigate('/dashboard')
+  } catch (error) {
+    setError(error.message || 'Username atau password salah')
+  }
+}
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#E4D0FF] px-4 font-poppins">
@@ -43,7 +56,7 @@ const Login = () => {
           </h1>
 
           <p className="mt-1 text-xs text-black">
-            Silahkan  masukkan username dan password          
+            Silahkan masukkan username dan password
           </p>
         </div>
 
@@ -69,7 +82,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan username"
-                className="w-full rounded-lg border border-gray-300 py-2.5 pl-12 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-[#E2E2E2]"
+                className="w-full rounded-lg border border-gray-300 bg-[#E2E2E2] py-2.5 pl-12 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
@@ -83,7 +96,6 @@ const Login = () => {
             </label>
 
             <div className="relative">
-              {/* Icon password kiri */}
               <img
                 src={keyPassword}
                 alt=""
@@ -99,7 +111,6 @@ const Login = () => {
                 className="w-full rounded-lg border border-gray-300 bg-[#E2E2E2] py-2.5 pl-12 pr-10 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
 
-              {/* Icon mata kanan */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -107,7 +118,11 @@ const Login = () => {
               >
                 <img
                   src={showPassword ? invisibilityIcon : visibilityIcon}
-                  alt={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  alt={
+                    showPassword
+                      ? 'Sembunyikan password'
+                      : 'Tampilkan password'
+                  }
                   className="h-5 w-5"
                 />
               </button>
@@ -116,7 +131,11 @@ const Login = () => {
 
           {error && (
             <div className="flex items-center text-sm text-red-500">
-              <img src={warningLogin} alt="Warning" className="mr-2 h-3 w-3" />
+              <img
+                src={warningLogin}
+                alt="Warning"
+                className="mr-2 h-3 w-3"
+              />
               {error}
             </div>
           )}
@@ -127,7 +146,6 @@ const Login = () => {
           >
             Login
           </button>
-
         </form>
       </div>
     </div>

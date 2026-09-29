@@ -10,6 +10,7 @@ import NotFound from '../features/not-found/pages/NotFound'
 import SuratJalan from '../features/surat-jalan/pages/SuratJalan'
 import AppLayout from '../components/layout/AppLayout'
 import ProtectedRoute from './ProtectedRoutes'
+import ChangePassword from '../features/auth/pages/ChangePassword'
 
 const AppRoutes = () => {
     return (
@@ -26,6 +27,7 @@ const AppRoutes = () => {
                     <Route path="/data-material" element={<MaterialPage />} />
                     <Route path="/data-project" element={<ProjectPage />} />
                     <Route path="/surat-jalan" element={<SuratJalan />} />
+                    <Route path="/change-password" element={<ChangePassword />} />
                     <Route path="*" element={<NotFound />} />
                 </Route>
             </Route>

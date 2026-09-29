@@ -9,7 +9,6 @@ const SuratJalan = () => {
                 </h1>
             </div>
         </div>
-
         {/* Surat Jalan data */}
         <div>
 
