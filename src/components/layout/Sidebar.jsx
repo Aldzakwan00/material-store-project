@@ -85,7 +85,7 @@ const Sidebar = () => {
               Data Customer
             </SidebarButton>
 
-            <SidebarButton to="/data-project" icon={customerIcon}>
+            <SidebarButton to="/data-project" icon={proyekIcon}>
               Data Project
             </SidebarButton>
           </SidebarSection>
@@ -95,10 +95,6 @@ const Sidebar = () => {
             isOpen={openSection === 'transaksi'}
             onToggle={() => toggleSection('transaksi')}
           >
-            <SidebarButton to="/data-proyek" icon={proyekIcon}>
-              Data Proyek
-            </SidebarButton>
-
             <SidebarButton to="/surat-jalann" icon={suratJalanIcon}>
               Input Surat Jalan
             </SidebarButton>

@@ -1,75 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Swal from 'sweetalert2'
 import DataTable from '../../../components/table/DataTable'
 import projectIcon from '../../../assets/img/icon/proyek_icon.png'
 import saveIcon from '../../../assets/img/icon/SaveIcon.png'
 import editIcon from '../../../assets/img/icon/EditIcon.png'
+import {
+  getProject,
+  createProject,
+  updateProject,
+  deleteProject,
+} from '../../../services/ProjectServices'
+import { getCustomers } from '../../../services/CustomerServices'
 import './Project.css'
 
-const initialProjects = [
-  {
-    id: 1,
-    code: 'PRJK-001',
-    customer: 'PT Maju Jaya',
-    projectName: 'Pembangunan Gedung Kantor',
-    city: 'Malang',
-    shippingAddress: 'Jl. Soekarno Hatta No. 25, Malang',
-    contactPerson: 'Budi Santoso',
-    phone: '081234567890',
-  },
-  {
-    id: 2,
-    code: 'PRJK-002',
-    customer: 'CV Sumber Rezeki',
-    projectName: 'Renovasi Gudang',
-    city: 'Surabaya',
-    shippingAddress: 'Jl. Ahmad Yani No. 88, Surabaya',
-    contactPerson: 'Siti Aminah',
-    phone: '082345678901',
-  },
-  {
-    id: 3,
-    code: 'PRJK-003',
-    customer: 'PT Sejahtera Abadi',
-    projectName: 'Pembangunan Ruko',
-    city: 'Kediri',
-    shippingAddress: 'Jl. Diponegoro No. 15, Kediri',
-    contactPerson: 'Andi Pratama',
-    phone: '083456789012',
-  },
-  {
-    id: 4,
-    code: 'PRJK-004',
-    customer: 'PT Karya Bersama',
-    projectName: 'Pembangunan Perumahan',
-    city: 'Blitar',
-    shippingAddress: 'Jl. Merdeka No. 40, Blitar',
-    contactPerson: 'Rina Melati',
-    phone: '084567890123',
-  },
-  {
-    id: 5,
-    code: 'PRJK-005',
-    customer: 'CV Berkah Makmur',
-    projectName: 'Renovasi Gedung Sekolah',
-    city: 'Pasuruan',
-    shippingAddress: 'Jl. Panglima Sudirman No. 12, Pasuruan',
-    contactPerson: 'Agus Wijaya',
-    phone: '085678901234',
-  },
-  {
-    id: 6,
-    code: 'PRJK-006',
-    customer: 'PT Nusantara Jaya',
-    projectName: 'Pembangunan Workshop',
-    city: 'Malang',
-    shippingAddress: 'Jl. Tlogomas No. 75, Malang',
-    contactPerson: 'Dewi Lestari',
-    phone: '086789012345',
-  },
-]
-
 const ProjectPage = () => {
-  const [projects, setProjects] = useState(initialProjects)
+  const [projects, setProjects] = useState([])
+  const [customers, setCustomers] = useState([])
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isFormClosing, setIsFormClosing] = useState(false)
@@ -78,7 +27,12 @@ const ProjectPage = () => {
   const [searchCustomer, setSearchCustomer] = useState('')
   const [searchProject, setSearchProject] = useState('')
 
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] =
+    useState(false)
+
   const [formData, setFormData] = useState({
+    customerId: '',
     customer: '',
     projectName: '',
     city: '',
@@ -90,21 +44,110 @@ const ProjectPage = () => {
   const [formError, setFormError] = useState('')
 
   // =========================
-  // GENERATE KODE PROYEK
+  // GET PROJECT & CUSTOMER
   // =========================
-  const generateProjectCode = () => {
-    if (projects.length === 0) {
-      return 'PRJK-001'
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+
+      const [projectResponse, customerResponse] = await Promise.all([
+        getProject(),
+        getCustomers(),
+      ])
+
+      const projectData = Array.isArray(projectResponse)
+        ? projectResponse
+        : projectResponse?.items || []
+
+      const customerData = Array.isArray(customerResponse)
+        ? customerResponse
+        : customerResponse?.items || []
+
+      const formattedProjects = projectData.map((project) => ({
+        id: project.id,
+        code: project.kode || '',
+        customerId: project.customer_id || '',
+        customer: project.nama_pelanggan || '',
+        projectName: project.nama_proyek || '',
+        city: project.kota || '',
+        shippingAddress: project.alamat_kirim || '',
+        contactPerson: project.contact_person || '',
+        phone: project.proyek_telp || '',
+      }))
+
+      setProjects(formattedProjects)
+      setCustomers(customerData)
+    } catch (error) {
+      if (error.status === 401) {
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('isLoggedIn')
+
+        window.location.href = '/login'
+        return
+      }
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: error.message || 'Gagal mengambil data',
+        confirmButtonText: 'OKE',
+        confirmButtonColor: '#51448C',
+      })
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    const numbers = projects.map((project) => {
-      const number = parseInt(project.code.replace('PRJK-', ''), 10)
-      return isNaN(number) ? 0 : number
-    })
+  // =========================
+  // LOAD DATA
+  // =========================
+  useEffect(() => {
+    fetchData()
+  }, [])
 
-    const nextNumber = Math.max(...numbers) + 1
+  // =========================
+  // FILTER CUSTOMER DROPDOWN
+  // =========================
+  const filteredCustomers = customers.filter((customer) => {
+    const keyword = customerSearch.toLowerCase().trim()
 
-    return `PRJK-${String(nextNumber).padStart(3, '0')}`
+    return (
+      customer.nama_customer?.toLowerCase().includes(keyword) ||
+      customer.kode?.toLowerCase().includes(keyword)
+    )
+  })
+
+  // =========================
+  // CUSTOMER INPUT
+  // =========================
+  const handleCustomerInputChange = (event) => {
+    const value = event.target.value
+
+    setCustomerSearch(value)
+
+    setFormData((currentData) => ({
+      ...currentData,
+      customerId: '',
+      customer: value,
+    }))
+
+    setIsCustomerDropdownOpen(true)
+    setFormError('')
+  }
+
+  // =========================
+  // SELECT CUSTOMER
+  // =========================
+  const handleSelectCustomer = (customer) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      customerId: customer.id,
+      customer: customer.nama_customer,
+    }))
+
+    setCustomerSearch(customer.nama_customer)
+    setIsCustomerDropdownOpen(false)
+    setFormError('')
   }
 
   // =========================
@@ -113,21 +156,27 @@ const ProjectPage = () => {
   const handleEdit = (id) => {
     const project = projects.find((item) => item.id === id)
 
-    if (project) {
-      setEditingId(project.id)
-
-      setFormData({
-        customer: project.customer,
-        projectName: project.projectName,
-        city: project.city,
-        shippingAddress: project.shippingAddress,
-        contactPerson: project.contactPerson,
-        phone: project.phone,
-      })
-
-      setFormError('')
-      setIsFormOpen(true)
+    if (!project) {
+      return
     }
+
+    setEditingId(project.id)
+
+    setFormData({
+      customerId: project.customerId,
+      customer: project.customer,
+      projectName: project.projectName,
+      city: project.city,
+      shippingAddress: project.shippingAddress,
+      contactPerson: project.contactPerson,
+      phone: project.phone,
+    })
+
+    setCustomerSearch(project.customer)
+
+    setFormError('')
+    setIsCustomerDropdownOpen(false)
+    setIsFormOpen(true)
   }
 
   // =========================
@@ -151,6 +200,7 @@ const ProjectPage = () => {
     setEditingId(null)
 
     setFormData({
+      customerId: '',
       customer: '',
       projectName: '',
       city: '',
@@ -159,6 +209,8 @@ const ProjectPage = () => {
       phone: '',
     })
 
+    setCustomerSearch('')
+    setIsCustomerDropdownOpen(false)
     setFormError('')
     setIsFormOpen(true)
   }
@@ -167,6 +219,11 @@ const ProjectPage = () => {
   // CLOSE FORM
   // =========================
   const closeForm = () => {
+    if (isSubmitting) {
+      return
+    }
+
+    setIsCustomerDropdownOpen(false)
     setIsFormClosing(true)
 
     window.setTimeout(() => {
@@ -175,6 +232,7 @@ const ProjectPage = () => {
       setEditingId(null)
 
       setFormData({
+        customerId: '',
         customer: '',
         projectName: '',
         city: '',
@@ -183,6 +241,7 @@ const ProjectPage = () => {
         phone: '',
       })
 
+      setCustomerSearch('')
       setFormError('')
     }, 360)
   }
@@ -190,11 +249,15 @@ const ProjectPage = () => {
   // =========================
   // SUBMIT FORM
   // =========================
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
+    if (!formData.customerId) {
+      setFormError('Silahkan pilih customer yang terdaftar')
+      return
+    }
+
     if (
-      !formData.customer.trim() ||
       !formData.projectName.trim() ||
       !formData.city.trim() ||
       !formData.shippingAddress.trim() ||
@@ -205,31 +268,119 @@ const ProjectPage = () => {
       return
     }
 
-    if (editingId !== null) {
-      // Mode Edit
-      setProjects((currentProjects) =>
-        currentProjects.map((project) =>
-          project.id === editingId
-            ? {
-                ...project,
-                ...formData,
-              }
-            : project
-        )
+    try {
+      setIsSubmitting(true)
+      setFormError('')
+
+      const payload = {
+        customer_id: Number(formData.customerId),
+        nama_pelanggan: formData.customer.trim(),
+        nama_proyek: formData.projectName.trim(),
+        kota: formData.city.trim(),
+        alamat_kirim: formData.shippingAddress.trim(),
+        contact_person: formData.contactPerson.trim(),
+        proyek_telp: formData.phone.trim(),
+      }
+
+      if (editingId !== null) {
+        await updateProject(editingId, payload)
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data proyek berhasil diperbarui',
+          confirmButtonText: 'OKE',
+          confirmButtonColor: '#51448C',
+        })
+      } else {
+        await createProject(payload)
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data proyek berhasil ditambahkan',
+          confirmButtonText: 'OKE',
+          confirmButtonColor: '#51448C',
+        })
+      }
+
+      await fetchData()
+
+      closeForm()
+    } catch (error) {
+      if (error.status === 401) {
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('isLoggedIn')
+
+        window.location.href = '/login'
+        return
+      }
+
+      setFormError(
+        error.message ||
+          (editingId !== null
+            ? 'Gagal memperbarui data proyek'
+            : 'Gagal menambahkan data proyek')
       )
-    } else {
-      // Mode Tambah
-      setProjects((currentProjects) => [
-        ...currentProjects,
-        {
-          id: Date.now(),
-          code: generateProjectCode(),
-          ...formData,
-        },
-      ])
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // =========================
+  // DELETE DATA
+  // =========================
+  const handleDelete = async (id) => {
+    const project = projects.find((item) => item.id === id)
+
+    if (!project) {
+      return
     }
 
-    closeForm()
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Hapus Data?',
+      text: `Data proyek "${project.projectName}" akan dihapus.`,
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6b7280',
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
+    try {
+      await deleteProject(id)
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data proyek berhasil dihapus',
+        confirmButtonText: 'OKE',
+        confirmButtonColor: '#51448C',
+      })
+
+      await fetchData()
+    } catch (error) {
+      if (error.status === 401) {
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('isLoggedIn')
+
+        window.location.href = '/login'
+        return
+      }
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: error.message || 'Gagal menghapus data proyek',
+        confirmButtonText: 'OKE',
+        confirmButtonColor: '#51448C',
+      })
+    }
   }
 
   // =========================
@@ -404,28 +555,40 @@ const ProjectPage = () => {
 
         {/* TABLE */}
         <div className="project-table-wrapper">
-            <div className="project-table-inner">
-                <DataTable
-                columns={columns}
-                data={filteredProjects}
-                actionLabel="Action"
-                tableClassName="text-xs sm:text-sm project-table"
-                actions={(row) => (
-                    <button
+          <div className="project-table-inner">
+            <DataTable
+              columns={columns}
+              data={filteredProjects}
+              loading={isLoading}
+              actionLabel="Action"
+              tableClassName="text-xs sm:text-sm project-table"
+              actions={(row) => (
+                <div className="flex items-center gap-1">
+                  <button
                     type="button"
                     onClick={() => handleEdit(row.id)}
                     className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
-                    >
+                  >
                     <img
-                        src={editIcon}
-                        alt=""
-                        className="mr-2 h-3.5 w-3.5 object-contain"
+                      src={editIcon}
+                      alt=""
+                      className="mr-2 h-3.5 w-3.5 object-contain"
                     />
+
                     Edit
-                    </button>
-                )}
-                />
-            </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(row.id)}
+                    className="flex items-center whitespace-nowrap rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            />
+          </div>
         </div>
 
       </section>
@@ -501,14 +664,79 @@ const ProjectPage = () => {
                 Nama Customer
               </label>
 
-              <input
-                id="project-customer"
-                name="customer"
-                value={formData.customer}
-                onChange={handleFormChange}
-                placeholder="Masukkan nama customer"
-                className="mb-2.5 h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
-              />
+              <div className="relative mb-2.5">
+                <input
+                  id="project-customer"
+                  name="customer"
+                  value={customerSearch}
+                  onChange={handleCustomerInputChange}
+                  onFocus={() => setIsCustomerDropdownOpen(true)}
+                  placeholder="Masukkan nama customer"
+                  autoComplete="off"
+                  className="h-9 w-full rounded-lg border-0 bg-white px-3 pr-9 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsCustomerDropdownOpen((current) => !current)
+                  }
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#51448C]"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </button>
+
+                {isCustomerDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-10 z-20 max-h-48 overflow-y-auto rounded-lg border border-[#e0e0e5] bg-white shadow-lg">
+
+                    {filteredCustomers.length > 0 ? (
+                      filteredCustomers.map((customer) => (
+                        <button
+                          key={customer.id}
+                          type="button"
+                          onClick={() => handleSelectCustomer(customer)}
+                          className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-[#f5f2ff]"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-[#51448C]">
+                              {customer.nama_customer}
+                            </p>
+
+                            <p className="text-[10px] text-gray-400">
+                              {customer.kode}
+                            </p>
+                          </div>
+
+                          {Number(formData.customerId) ===
+                            Number(customer.id) && (
+                            <span className="ml-2 text-xs text-green-500">
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-3 text-[10px] text-gray-400">
+                        Customer tidak ditemukan
+                      </p>
+                    )}
+
+                  </div>
+                )}
+              </div>
 
               {/* PROJECT NAME */}
               <label
@@ -610,7 +838,8 @@ const ProjectPage = () => {
               {/* SAVE */}
               <button
                 type="submit"
-                className="mt-3 flex items-center rounded-md bg-[#51448C] px-3 py-2 text-[10px] font-medium text-white transition hover:bg-[#433878]"
+                disabled={isSubmitting}
+                className="mt-3 flex items-center rounded-md bg-[#51448C] px-3 py-2 text-[10px] font-medium text-white transition hover:bg-[#433878] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <img
                   src={saveIcon}
@@ -618,7 +847,7 @@ const ProjectPage = () => {
                   className="mr-2 h-3.5 w-3.5 object-contain"
                 />
 
-                Simpan Data
+                {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
               </button>
 
             </form>
