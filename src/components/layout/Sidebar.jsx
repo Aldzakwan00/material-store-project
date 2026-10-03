@@ -95,7 +95,7 @@ const Sidebar = () => {
             isOpen={openSection === 'transaksi'}
             onToggle={() => toggleSection('transaksi')}
           >
-            <SidebarButton to="/surat-jalann" icon={suratJalanIcon}>
+            <SidebarButton to="/surat-jalan" icon={suratJalanIcon}>
               Input Surat Jalan
             </SidebarButton>
 

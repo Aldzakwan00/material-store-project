@@ -141,3 +141,30 @@ a {
   display: none;
 }
 
+/* =====================================================
+   UNIVERSAL HORIZONTAL SCROLLBAR
+===================================================== */
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #51448c #eeeeee;
+}
+
+/* Chrome, Edge, Opera */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #eeeeee;
+    border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #51448c;
+    border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #433878;
+}
