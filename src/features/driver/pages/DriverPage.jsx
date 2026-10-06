@@ -263,8 +263,7 @@ const DriverPage = () => {
   if (
     !formData.name.trim() ||
     !formData.plateNumber.trim() ||
-    !formData.address.trim() ||
-    !formData.delivery.trim()
+    !formData.address.trim()
   ) {
     setFormError("Kolom tidak boleh kosong");
     return;
