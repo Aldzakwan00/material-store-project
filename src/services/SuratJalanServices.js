@@ -63,6 +63,7 @@ export const createSuratJalan = async (suratJalanData) => {
             items: suratJalanData.items.map((item) => ({
                 material_id: item.material_id,
                 qty: item.qty,
+                harga_jual: item.harga_jual,
             })),
         }),
     });

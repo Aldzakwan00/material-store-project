@@ -36,6 +36,9 @@ const SuratJalan = () => {
 
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+    const [tableSearch, setTableSearch] = useState('')
+    const [customerFilter, setCustomerFilter] = useState('')
 
     // =====================================================
     // EDIT STATE
@@ -604,6 +607,30 @@ const SuratJalan = () => {
     }
 
     // =====================================================
+    // SELL PRICE CHANGE
+    // =====================================================
+    const handleSellPriceChange = (
+        itemId,
+        value
+    ) => {
+        const digitsOnly = value.replace(/\D/g, '')
+
+        setItems((currentItems) =>
+            currentItems.map((item) =>
+                item.id === itemId
+                    ? {
+                          ...item,
+                          harga_jual:
+                              digitsOnly === ''
+                                  ? ''
+                                  : Number(digitsOnly),
+                      }
+                    : item
+            )
+        )
+    }
+
+    // =====================================================
     // ADD MATERIAL
     // =====================================================
     const handleAddMaterial = () => {
@@ -772,6 +799,7 @@ const SuratJalan = () => {
     const resetForm = (
         latestSuratJalans = suratJalanParents
     ) => {
+        setIsFormModalOpen(false)
         setIsEditing(false)
         setEditingSuratJalanId(null)
 
@@ -1098,6 +1126,7 @@ const handleEditSuratJalan = async (item) => {
                                 material?.harga_jual ??
                                 0
                         ),
+
                 }
             }
         )
@@ -1110,12 +1139,9 @@ const handleEditSuratJalan = async (item) => {
         setIsDriverDropdownOpen(false)
         setIsCustomerDropdownOpen(false)
         setIsMaterialDropdownOpen(null)
-
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        })
+        setIsFormModalOpen(true)
     } catch (error) {
+        setIsFormModalOpen(false)
         setIsEditing(false)
         setEditingSuratJalanId(null)
 
@@ -1385,6 +1411,28 @@ const handleSubmit = async (event) => {
     }
 
     // =================================================
+    // VALIDASI HARGA JUAL
+    // =================================================
+    const itemsWithInvalidSellPrice =
+        normalizedItems.filter((item) => {
+            const hargaJual = Number(item.harga_jual)
+
+            return (
+                String(item.harga_jual ?? '').trim() === '' ||
+                !Number.isFinite(hargaJual) ||
+                hargaJual < 0
+            )
+        })
+
+    if (itemsWithInvalidSellPrice.length > 0) {
+        showErrorAlert(
+            'Harga Jual Tidak Valid',
+            'Harga jual setiap material harus berupa angka nol atau lebih.'
+        )
+        return
+    }
+
+    // =================================================
     // CEK DUPLIKAT MATERIAL
     // =================================================
     const materialIds =
@@ -1437,6 +1485,11 @@ const handleSubmit = async (event) => {
                     qty:
                         Number(
                             item.qty
+                        ),
+
+                    harga_jual:
+                        Number(
+                            item.harga_jual
                         ),
                 })
             ),
@@ -1516,24 +1569,24 @@ const handleSubmit = async (event) => {
     // =====================================================
     const suratJalanColumns = [
         {
-            key: 'no',
-            label: 'No',
-            render: (_, index) =>
-                index + 1,
-        },
-        {
-            key: 'no_surat_jalan',
-            label: 'No Surat Jalan',
-            render: (row) =>
-                row.no_surat_jalan || '-',
-        },
-        {
             key: 'tanggal',
             label: 'Tanggal',
             render: (row) =>
                 formatDate(
                     row.tanggal
                 ),
+        },
+        {
+            key: 'no_surat_jalan',
+            label: 'No. SJ',
+            render: (row) =>
+                row.no_surat_jalan || '-',
+        },
+        {
+            key: 'nama_supir',
+            label: 'Driver',
+            render: (row) =>
+                row.nama_supir || '-',
         },
         {
             key: 'nama_customer',
@@ -1543,21 +1596,9 @@ const handleSubmit = async (event) => {
         },
         {
             key: 'nama_proyek',
-            label: 'Project',
+            label: 'Proyek',
             render: (row) =>
                 row.nama_proyek || '-',
-        },
-        {
-            key: 'nama_supir',
-            label: 'Nama Supir',
-            render: (row) =>
-                row.nama_supir || '-',
-        },
-        {
-            key: 'no_plat_mobil',
-            label: 'No Mobil',
-            render: (row) =>
-                row.no_plat_mobil || '-',
         },
         {
             key: 'nama_barang',
@@ -1566,14 +1607,8 @@ const handleSubmit = async (event) => {
                 row.nama_barang || '-',
         },
         {
-            key: 'satuan',
-            label: 'Satuan',
-            render: (row) =>
-                row.satuan || '-',
-        },
-        {
             key: 'qty',
-            label: 'Qty',
+            label: 'Quantity',
             render: (row) => {
                 const qty =
                     Number(row.qty)
@@ -1583,24 +1618,6 @@ const handleSubmit = async (event) => {
                 )
                     ? qty
                     : 0
-            },
-        },
-        {
-            key: 'harga_beli',
-            label: 'Harga Beli',
-            render: (row) => {
-                const hargaBeli =
-                    Number(
-                        row.harga_beli
-                    )
-
-                return `Rp ${formatPrice(
-                    Number.isFinite(
-                        hargaBeli
-                    )
-                        ? hargaBeli
-                        : 0
-                )}`
             },
         },
         {
@@ -1657,14 +1674,8 @@ const handleSubmit = async (event) => {
             },
         },
         {
-            key: 'no_nota',
-            label: 'No Nota',
-            render: (row) =>
-                row.no_nota || '-',
-        },
-        {
             key: 'action',
-            label: 'Action',
+            label: 'Aksi',
             render: (row) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -1675,7 +1686,7 @@ const handleSubmit = async (event) => {
                             )
                         }
                         disabled={isSaving}
-                        className="rounded-md bg-[#51448C] px-3 py-1.5 text-[10px] font-medium text-white transition hover:bg-[#433878] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-md bg-[#51448C] px-2.5 py-1 text-[10px] font-medium text-white transition hover:bg-[#433878] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Edit
                     </button>
@@ -1688,7 +1699,7 @@ const handleSubmit = async (event) => {
                             )
                         }
                         disabled={isSaving}
-                        className="rounded-md bg-red-500 px-3 py-1.5 text-[10px] font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-md bg-red-500 px-2.5 py-1 text-[10px] font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Hapus
                     </button>
@@ -1758,6 +1769,40 @@ const handleSubmit = async (event) => {
         )
     }, [suratJalans])
 
+    const filteredTableData = useMemo(() => {
+        const keyword = tableSearch.trim().toLowerCase()
+
+        return tableData.filter((row) => {
+            const matchesCustomer =
+                !customerFilter ||
+                String(row.customer_id ?? '') === customerFilter
+
+            const matchesSearch =
+                !keyword ||
+                [
+                    row.tanggal,
+                    row.no_surat_jalan,
+                    row.nama_supir,
+                    row.nama_customer,
+                    row.nama_proyek,
+                    row.nama_barang,
+                    row.qty,
+                    row.harga_jual,
+                ].some((value) =>
+                    String(value ?? '')
+                        .toLowerCase()
+                        .includes(keyword)
+                )
+
+            return matchesCustomer && matchesSearch
+        })
+    }, [tableData, tableSearch, customerFilter])
+
+    const handleCreateSuratJalan = () => {
+        resetForm(suratJalanParents)
+        setIsFormModalOpen(true)
+    }
+
     // =====================================================
     // LOADING
     // =====================================================
@@ -1800,46 +1845,99 @@ const handleSubmit = async (event) => {
                 />
 
                 <h1 className="text-2xl font-bold text-[#51448C]">
-                    INPUT SURAT JALAN
+                    SURAT JALAN
                 </h1>
             </div>
 
-            {/* MODE EDIT */}
-            {isEditing && (
-                <div className="mb-4 flex items-center justify-between rounded-xl border border-[#d8cdf5] bg-[#f4f0ff] px-4 py-3">
-                    <div>
-                        <p className="text-xs font-semibold text-[#51448C]">
-                            Mode Edit
-                        </p>
-
-                        <p className="text-[10px] text-gray-500">
-                            Sedang mengedit surat jalan{' '}
-                            <span className="font-semibold text-[#51448C]">
-                                {
-                                    formData.no_surat_jalan
-                                }
-                            </span>
-                        </p>
-                    </div>
-
+            {/* SURAT JALAN TABLE */}
+            <section className="min-h-[65vh] w-full rounded-2xl border border-[#d9d9df] bg-[#f5f5f6] p-4 shadow-sm">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
                         type="button"
-                        onClick={() =>
-                            resetForm(
-                                suratJalanParents
-                            )
-                        }
+                        onClick={handleCreateSuratJalan}
                         disabled={isSaving}
-                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-[10px] font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg bg-white px-3 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Batal Edit
+                        <span className="text-base leading-none">+</span>
+                        Tambah Data
+                    </button>
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <select
+                            value={customerFilter}
+                            onChange={(event) =>
+                                setCustomerFilter(event.target.value)
+                            }
+                            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-[#51448C] outline-none focus:border-[#51448C]"
+                            aria-label="Filter berdasarkan customer"
+                        >
+                            <option value="">Pilih Customer</option>
+                            {customers.map((customer) => (
+                                <option
+                                    key={customer.id}
+                                    value={String(customer.id)}
+                                >
+                                    {customer.nama_customer}
+                                </option>
+                            ))}
+                        </select>
+
+                        <label className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-400 focus-within:border-[#51448C]">
+                            <span aria-hidden="true">⌕</span>
+                            <input
+                                type="search"
+                                value={tableSearch}
+                                onChange={(event) =>
+                                    setTableSearch(event.target.value)
+                                }
+                                placeholder="Search..."
+                                className="w-36 bg-transparent text-xs text-gray-700 outline-none sm:w-40"
+                                aria-label="Cari surat jalan"
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                <div className="custom-scrollbar w-full overflow-x-auto">
+                    <DataTable
+                        columns={suratJalanColumns}
+                        data={filteredTableData}
+                        tableClassName="text-left text-[13px] tabular-nums"
+                    />
+                </div>
+            {isFormModalOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3 sm:p-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="surat-jalan-modal-title"
+                >
+            {/* FORM MODAL */}
+            <section className="max-h-[94vh] w-full max-w-[63rem] overflow-y-auto rounded-2xl border border-[#d9d9df] bg-[#f5f5f6] p-5 shadow-2xl">
+                <div className="mb-5 flex items-start justify-between">
+                    <div>
+                        <h2
+                            id="surat-jalan-modal-title"
+                            className="text-base font-bold text-[#51448C]"
+                        >
+                            {isEditing
+                                ? 'Edit Surat Jalan'
+                                : 'Input Surat Jalan'}
+                        </h2>
+                        <p className="mt-1 text-[10px] text-gray-500">
+                            Lengkapi informasi surat jalan dan material.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => resetForm(suratJalanParents)}
+                        disabled={isSaving}
+                        className="rounded-md px-2 text-2xl leading-none text-gray-400 transition hover:text-[#51448C] disabled:opacity-50"
+                        aria-label="Tutup form surat jalan"
+                    >
+                        ×
                     </button>
                 </div>
-            )}
-
-            {/* FORM */}
-            <section className="w-full rounded-2xl border border-[#d9d9df] bg-[#f5f5f6] p-5 shadow-sm">
-
                 <form onSubmit={handleSubmit}>
 
                     {/* ROW 1 */}
@@ -2495,11 +2593,30 @@ const handleSubmit = async (event) => {
                                                         Harga Jual
                                                     </label>
 
-                                                    <div className="flex h-9 items-center rounded-md bg-[#f8f6ff] px-3 text-[10px] font-semibold text-[#51448C]">
-                                                        Rp{' '}
-                                                        {formatPrice(
-                                                            item.harga_jual
-                                                        )}
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#51448C]">
+                                                            Rp
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={
+                                                                item.harga_jual ===
+                                                                ''
+                                                                    ? ''
+                                                                    : formatPrice(
+                                                                          item.harga_jual
+                                                                      )
+                                                            }
+                                                            onChange={(event) =>
+                                                                handleSellPriceChange(
+                                                                    item.id,
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            className="h-9 w-full rounded-md border border-[#e4dfff] bg-[#f8f6ff] pl-9 pr-3 text-[10px] font-semibold text-[#51448C] outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
+                                                            placeholder="0"
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -2548,7 +2665,6 @@ const handleSubmit = async (event) => {
                         </div>
 
                     </div>
-
                     {/* SAVE / UPDATE */}
                     <div className="flex justify-end gap-2">
 
@@ -2589,30 +2705,8 @@ const handleSubmit = async (event) => {
 
                 </form>
             </section>
-
-            {/* DATA SURAT JALAN */}
-            <section className="mt-8 w-full">
-
-                <div className="mb-4">
-                    <h2 className="text-lg font-bold text-[#51448C]">
-                        Data Surat Jalan
-                    </h2>
-
-                    <p className="text-xs text-gray-500">
-                        Daftar surat jalan yang telah dibuat
-                    </p>
                 </div>
-
-                <div className="custom-scrollbar w-full overflow-x-auto">
-
-                    <DataTable
-                        columns={
-                            suratJalanColumns
-                        }
-                        data={tableData}
-                    />
-
-                </div>
+            )}
             </section>
 
         </main>
