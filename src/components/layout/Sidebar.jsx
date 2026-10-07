@@ -6,6 +6,7 @@ import driverIcon from '../../assets/img/icon/driver_icon.png'
 import materialIcon from '../../assets/img/icon/material_icon.png'
 import proyekIcon from '../../assets/img/icon/proyek_icon.png'
 import suratJalanIcon from '../../assets/img/icon/surat_jalan_icon.png'
+import notaTagihanIcon from '../../assets/img/icon/NotaIcon.png'
 
 const Sidebar = () => {
   const [openSection, setOpenSection] = useState(null)
@@ -99,13 +100,10 @@ const Sidebar = () => {
               Input Surat Jalan
             </SidebarButton>
 
-            <SidebarButton to="/nota-tagihan">
+            <SidebarButton to="/nota-tagihan" icon={notaTagihanIcon}>
               Nota Tagihan
             </SidebarButton>
 
-            <SidebarButton to="/pembayaran-nota">
-              Pembayaran Nota
-            </SidebarButton>
           </SidebarSection>
 
           <SidebarSection

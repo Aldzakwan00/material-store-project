@@ -169,38 +169,6 @@ const SuratJalan = () => {
     }
 
     // =====================================================
-    // GENERATE NO SURAT JALAN
-    // =====================================================
-    const generateNextSuratJalanNumber = (data) => {
-        if (!Array.isArray(data) || data.length === 0) {
-            return 'SJ0001'
-        }
-
-        const numbers = data
-            .map((item) => {
-                const number = item.no_surat_jalan
-
-                if (!number) {
-                    return 0
-                }
-
-                const match = String(number).match(/^SJ(\d+)$/)
-
-                return match
-                    ? Number(match[1])
-                    : 0
-            })
-            .filter((number) => number > 0)
-
-        const nextNumber =
-            numbers.length > 0
-                ? Math.max(...numbers) + 1
-                : 1
-
-        return `SJ${String(nextNumber).padStart(4, '0')}`
-    }
-
-    // =====================================================
     // LOAD INITIAL DATA
     // =====================================================
     useEffect(() => {
@@ -278,15 +246,6 @@ const SuratJalan = () => {
                     materialItems
                 )
 
-                setFormData(
-                    (current) => ({
-                        ...current,
-                        no_surat_jalan:
-                            generateNextSuratJalanNumber(
-                                suratJalanParentItems
-                            ),
-                    })
-                )
             } catch (error) {
                 showErrorAlert(
                     'Gagal Memuat Data',
@@ -796,9 +755,7 @@ const SuratJalan = () => {
     // =====================================================
     // RESET FORM
     // =====================================================
-    const resetForm = (
-        latestSuratJalans = suratJalanParents
-    ) => {
+    const resetForm = () => {
         setIsFormModalOpen(false)
         setIsEditing(false)
         setEditingSuratJalanId(null)
@@ -828,10 +785,7 @@ const SuratJalan = () => {
         ])
 
         setFormData({
-            no_surat_jalan:
-                generateNextSuratJalanNumber(
-                    latestSuratJalans
-                ),
+            no_surat_jalan: '',
             tanggal: new Date()
                 .toISOString()
                 .split('T')[0],
@@ -1235,14 +1189,6 @@ const handleDeleteSuratJalan = async (item) => {
                 latestParents,
             } = await refreshSuratJalanData()
 
-            // Update nomor surat jalan berikutnya
-            setFormData((current) => ({
-                ...current,
-                no_surat_jalan:
-                    generateNextSuratJalanNumber(
-                        latestParents
-                    ),
-            }))
         } catch {
             // DELETE SUDAH BERHASIL.
             // Kalau refresh gagal, jangan tampilkan
@@ -1275,6 +1221,17 @@ const handleDeleteSuratJalan = async (item) => {
 // =====================================================
 const handleSubmit = async (event) => {
     event.preventDefault()
+
+    // =================================================
+    // VALIDASI NOMOR SURAT JALAN
+    // =================================================
+    if (!formData.no_surat_jalan.trim()) {
+        showErrorAlert(
+            'Data Belum Lengkap',
+            'Nomor surat jalan harus diisi.'
+        )
+        return
+    }
 
     // =================================================
     // VALIDASI TANGGAL
@@ -1520,9 +1477,7 @@ const handleSubmit = async (event) => {
                 `Surat jalan ${formData.no_surat_jalan} berhasil diupdate.`
             )
 
-            resetForm(
-                latestParents
-            )
+            resetForm()
 
             return
         }
@@ -1544,9 +1499,7 @@ const handleSubmit = async (event) => {
             `Surat jalan ${formData.no_surat_jalan} berhasil dibuat.`
         )
 
-        resetForm(
-            latestParents
-        )
+        resetForm()
     } catch (error) {
         showErrorAlert(
             isEditing
@@ -1799,7 +1752,7 @@ const handleSubmit = async (event) => {
     }, [tableData, tableSearch, customerFilter])
 
     const handleCreateSuratJalan = () => {
-        resetForm(suratJalanParents)
+        resetForm()
         setIsFormModalOpen(true)
     }
 
@@ -1930,7 +1883,7 @@ const handleSubmit = async (event) => {
                     </div>
                     <button
                         type="button"
-                        onClick={() => resetForm(suratJalanParents)}
+                        onClick={() => resetForm()}
                         disabled={isSaving}
                         className="rounded-md px-2 text-2xl leading-none text-gray-400 transition hover:text-[#51448C] disabled:opacity-50"
                         aria-label="Tutup form surat jalan"
@@ -1954,8 +1907,14 @@ const handleSubmit = async (event) => {
                                 value={
                                     formData.no_surat_jalan
                                 }
-                                readOnly
-                                className="h-10 w-full cursor-not-allowed rounded-lg border-0 bg-[#b1adae] px-3 text-xs font-medium text-white outline-none"
+                                onChange={(event) =>
+                                    setFormData((current) => ({
+                                        ...current,
+                                        no_surat_jalan: event.target.value,
+                                    }))
+                                }
+                                placeholder="Masukkan nomor surat jalan"
+                                className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
                             />
                         </div>
 
@@ -2672,9 +2631,7 @@ const handleSubmit = async (event) => {
                             <button
                                 type="button"
                                 onClick={() =>
-                                    resetForm(
-                                        suratJalanParents
-                                    )
+                                    resetForm()
                                 }
                                 disabled={
                                     isSaving
