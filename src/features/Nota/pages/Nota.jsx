@@ -12,7 +12,15 @@ import {
   createNotaTagihanChecked,
   updateNotaTagihanCicil,
   updateNotaTagihanLunas,
+  deleteNotaTagihan,
+  pratinjauNotaTagihan,
+  printUlangNotaTagihan
 } from '../../../services/NotaServices'
+
+import {
+  bayarCicil,
+  bayarLunas,
+} from '../../../services/PembayaranNota'
 
 import { getCustomers } from '../../../services/CustomerServices'
 import { getDriver } from '../../../services/DriverServices'
@@ -27,27 +35,75 @@ const formatRupiah = (value) => {
 
 
 // ======================================================
-// FORMAT TANGGAL
+// FORMAT TANGGAL UNTUK INPUT
 // ======================================================
 const formatDateForInput = (dateString) => {
   if (!dateString) return ''
 
-  if (dateString.includes('/')) {
-    const [day, month, year] = dateString.split('/')
+  const value = String(dateString)
 
-    return `${year}-${month}-${day}`
+  if (value.includes('/')) {
+    const [day, month, year] = value.split('/')
+
+    if (day && month && year) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
   }
 
-  return dateString
+  if (value.includes('T')) {
+    return value.split('T')[0]
+  }
+
+  return value
 }
 
 
+// ======================================================
+// FORMAT TANGGAL DISPLAY
+// ======================================================
 const formatDateDisplay = (dateString) => {
   if (!dateString) return ''
 
-  const [year, month, day] = dateString.split('-')
+  const value = formatDateForInput(dateString)
+
+  const [year, month, day] = value.split('-')
+
+  if (!year || !month || !day) {
+    return dateString
+  }
 
   return `${day}/${month}/${year}`
+}
+
+
+// ======================================================
+// AMBIL ID ITEM SURAT JALAN
+// ======================================================
+const getSuratJalanItemId = (item) => {
+  if (!item) return null
+
+  return (
+    item.item_id ??
+    item.surat_jalan_item_id ??
+    item.id_item ??
+    item.id
+  )
+}
+
+
+// ======================================================
+// NORMALISASI ID
+// ======================================================
+const normalizeIds = (ids) => {
+  return (ids || [])
+    .filter(
+      (id) =>
+        id !== null &&
+        id !== undefined &&
+        id !== ''
+    )
+    .map((id) => Number(id))
+    .filter((id) => !Number.isNaN(id))
 }
 
 
@@ -62,6 +118,7 @@ const SearchableDropdown = ({
   placeholder,
   loading,
   disabled = false,
+  showLabel = true,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
@@ -70,19 +127,19 @@ const SearchableDropdown = ({
   const searchInputRef = useRef(null)
 
   const selectedOption = options.find(
-    (option) => String(option.id) === String(value)
+    (option) =>
+      String(option.id) === String(value)
   )
 
   const filteredOptions = options.filter((option) =>
     String(option.name || '')
       .toLowerCase()
-      .includes(searchValue.toLowerCase())
+      .includes(
+        searchValue.toLowerCase()
+      )
   )
 
 
-  // ======================================================
-  // CLICK OUTSIDE
-  // ======================================================
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -108,9 +165,6 @@ const SearchableDropdown = ({
   }, [])
 
 
-  // ======================================================
-  // BUKA DROPDOWN
-  // ======================================================
   const handleOpen = () => {
     if (disabled) return
 
@@ -122,9 +176,6 @@ const SearchableDropdown = ({
   }
 
 
-  // ======================================================
-  // PILIH DATA
-  // ======================================================
   const handleSelect = (option) => {
     onChange(String(option.id))
     setIsOpen(false)
@@ -138,14 +189,13 @@ const SearchableDropdown = ({
       className="relative min-w-0"
     >
 
-      <label className="mb-1.5 block text-xs font-medium text-[#333333]">
-        {label}
-      </label>
+      {showLabel && (
+        <label className="mb-1.5 block text-xs font-medium text-[#333333]">
+          {label}
+        </label>
+      )}
 
 
-      {/* ==================================================
-          BUTTON DROPDOWN
-      ================================================== */}
       <button
         type="button"
         disabled={disabled}
@@ -196,14 +246,15 @@ const SearchableDropdown = ({
       </button>
 
 
-      {/* ==================================================
-          DROPDOWN
-      ================================================== */}
       {isOpen && !disabled && (
+        <div
+          className={`absolute left-0 right-0 z-[100] overflow-hidden rounded-xl border border-[#dedde5] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.16)] ${
+            showLabel
+              ? 'top-[72px]'
+              : 'top-[46px]'
+          }`}
+        >
 
-        <div className="absolute left-0 right-0 top-[72px] z-[100] overflow-hidden rounded-xl border border-[#dedde5] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
-
-          {/* SEARCH */}
           <div className="border-b border-[#eeeeee] bg-white p-2.5">
 
             <div className="flex h-10 items-center rounded-lg border border-[#e3e1e9] bg-[#fafafa] px-3 transition focus-within:border-[#51448C] focus-within:ring-2 focus-within:ring-[#51448C]/10">
@@ -223,13 +274,14 @@ const SearchableDropdown = ({
                 />
               </svg>
 
-
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchValue}
                 onChange={(event) =>
-                  setSearchValue(event.target.value)
+                  setSearchValue(
+                    event.target.value
+                  )
                 }
                 placeholder={`Cari ${label.toLowerCase()}...`}
                 className="ml-2 h-full min-w-0 w-full bg-transparent text-xs text-[#333333] outline-none placeholder:text-[#aaa5b5]"
@@ -240,7 +292,6 @@ const SearchableDropdown = ({
           </div>
 
 
-          {/* OPTION LIST */}
           <div className="max-h-[220px] overflow-y-auto p-1.5 scrollbar-thin">
 
             <button
@@ -321,7 +372,6 @@ const SearchableDropdown = ({
           </div>
 
         </div>
-
       )}
 
     </div>
@@ -394,46 +444,131 @@ const Nota = () => {
   const [suratJalanSearched, setSuratJalanSearched] =
     useState(false)
 
+  const [isPaymentOpen, setIsPaymentOpen] =
+    useState(false)
+
+  const [isPaymentClosing, setIsPaymentClosing] =
+    useState(false)
+
+  const [paymentData, setPaymentData] = useState({
+    id: null,
+    noNota: '',
+    tanggalBayar: '',
+    totalTagihan: 0,
+    sisaTagihan: 0,
+    status: 'normal',
+    jumlahBayar: '',
+  })
+
+  const [paymentLoading, setPaymentLoading] =
+    useState(false)
+
+  // ======================================================
+  // PRATINJAU + PRINT ULANG
+  // ======================================================
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isPreviewClosing, setIsPreviewClosing] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [printLoading, setPrintLoading] = useState(false)
+  const [previewData, setPreviewData] = useState('')
+  const [previewInvoice, setPreviewInvoice] = useState(null)
+
+
+  // ======================================================
+  // ID ITEM EDIT YANG HARUS TETAP TERPILIH
+  // ======================================================
+  const editSelectedItemIdsRef = useRef([])
+
 
   // ======================================================
   // GET NOTA TAGIHAN
   // ======================================================
   const fetchNotaTagihan = async () => {
+
     try {
+
       setLoading(true)
 
-      const response = await getNotaTagihan()
+      const response =
+        await getNotaTagihan()
 
-      const items = response?.items || []
+      const items =
+        response?.items || []
 
-      const formattedData = items.map((item) => ({
-        id: item.id,
-        noNota: item.no_nota,
-        tanggal: item.tanggal_nota,
+      const formattedData =
+        items.map((item) => {
 
-        customerId: item.customer_id,
-        customer: item.nama_customer,
+          const detailItems =
+            Array.isArray(item.items)
+              ? item.items
+              : []
 
-        driverId: item.driver_id,
-        driver: item.nama_supir,
+          return {
+            id: item.id,
 
-        tanggalKirimDari: item.tanggal_kirim_dari,
-        tanggalKirimSampai: item.tanggal_kirim_sampai,
+            noNota:
+              item.no_nota,
 
-        jumlah: item.total_tagihan,
-        bayar: item.bayar,
-        sisa: item.sisa,
+            tanggal:
+              item.tanggal_nota,
 
-        status: item.status,
-        dilunaskan: item.dilunaskan,
+            customerId:
+              item.customer_id ??
+              item.customer?.id,
 
-        jumlahCetak: item.jumlah_cetak,
-        terakhirDicetak: item.terakhir_dicetak,
+            customer:
+              item.nama_customer ??
+              item.customer?.nama_customer ??
+              item.customer?.name ??
+              '',
 
-        // simpan detail item apabila tersedia
-        items: item.items || [],
-        pembayaran: item.pembayaran || [],
-      }))
+            driverId:
+              item.driver_id ??
+              item.driver?.id ??
+              item.id_driver,
+
+            driver:
+              item.nama_supir ??
+              item.nama_driver ??
+              item.driver?.nama_supir ??
+              item.driver?.nama_driver ??
+              item.driver?.name ??
+              '',
+
+            tanggalKirimDari:
+              item.tanggal_kirim_dari,
+
+            tanggalKirimSampai:
+              item.tanggal_kirim_sampai,
+
+            jumlah:
+              item.total_tagihan,
+
+            bayar:
+              item.bayar,
+
+            sisa:
+              item.sisa,
+
+            status:
+              item.status,
+
+            dilunaskan:
+              item.dilunaskan,
+
+            jumlahCetak:
+              item.jumlah_cetak,
+
+            terakhirDicetak:
+              item.terakhir_dicetak,
+
+            items:
+              detailItems,
+
+            pembayaran:
+              item.pembayaran || [],
+          }
+        })
 
       setInvoices(formattedData)
 
@@ -449,8 +584,11 @@ const Nota = () => {
       })
 
     } finally {
+
       setLoading(false)
+
     }
+
   }
 
 
@@ -501,8 +639,11 @@ const Nota = () => {
       })
 
     } finally {
+
       setLoadingCustomer(false)
+
     }
+
   }
 
 
@@ -550,19 +691,29 @@ const Nota = () => {
       })
 
     } finally {
+
       setLoadingDriver(false)
+
     }
+
   }
 
 
   // ======================================================
-  // LOAD CUSTOMER & DRIVER
+  // LOAD CUSTOMER
+  // ======================================================
+  useEffect(() => {
+    fetchCustomers()
+  }, [])
+
+
+  // ======================================================
+  // LOAD DRIVER KETIKA MODAL TERBUKA
   // ======================================================
   useEffect(() => {
 
     if (!isFormOpen) return
 
-    fetchCustomers()
     fetchDrivers()
 
   }, [isFormOpen])
@@ -600,7 +751,7 @@ const Nota = () => {
 
       const matchesCustomer =
         !selectedCustomer ||
-        invoice.customerId ===
+        Number(invoice.customerId) ===
           Number(selectedCustomer)
 
       let matchesDate = true
@@ -613,17 +764,21 @@ const Nota = () => {
         )
 
       if (filterStart) {
+
         matchesDate =
           matchesDate &&
           invoiceDate >=
             new Date(filterStart)
+
       }
 
       if (filterEnd) {
+
         matchesDate =
           matchesDate &&
           invoiceDate <=
             new Date(filterEnd)
+
       }
 
       return (
@@ -662,15 +817,21 @@ const Nota = () => {
 
 
   // ======================================================
-  // FETCH SURAT JALAN
+  // FETCH SURAT JALAN BERDASARKAN PARAMETER
   // ======================================================
-  const fetchSuratJalan = async () => {
+  const fetchSuratJalanByFilter = async ({
+    customerId,
+    driverId,
+    tanggalDari,
+    tanggalSampai,
+    preserveSelectedIds = [],
+  }) => {
 
     if (
-      !formData.customer_id ||
-      !formData.driver_id ||
-      !formData.tanggal_kirim_dari ||
-      !formData.tanggal_kirim_sampai
+      !customerId ||
+      !driverId ||
+      !tanggalDari ||
+      !tanggalSampai
     ) {
 
       setSuratJalanItems([])
@@ -679,23 +840,24 @@ const Nota = () => {
       setSuratJalanSearched(false)
 
       return
+
     }
+
 
     if (
-      formData.tanggal_kirim_dari >
-      formData.tanggal_kirim_sampai
+      tanggalDari >
+      tanggalSampai
     ) {
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Tanggal tidak valid',
-        text:
-          'Tanggal dari tidak boleh lebih besar dari tanggal sampai.',
-        confirmButtonColor: '#51448C',
-      })
+      setSuratJalanItems([])
+      setSelectedItemIds([])
+      setTotalTagihan(0)
+      setSuratJalanSearched(false)
 
       return
+
     }
+
 
     try {
 
@@ -704,20 +866,20 @@ const Nota = () => {
 
       const response =
         await getSuratJalanDariSampai(
-          Number(
-            formData.customer_id
-          ),
-          Number(
-            formData.driver_id
-          ),
-          formData.tanggal_kirim_dari,
-          formData.tanggal_kirim_sampai
+          Number(customerId),
+          Number(driverId),
+          tanggalDari,
+          tanggalSampai
         )
 
       const items =
-        response?.items || []
+        Array.isArray(response?.items)
+          ? response.items
+          : []
+
 
       setSuratJalanItems(items)
+
 
       setTotalTagihan(
         Number(
@@ -725,11 +887,64 @@ const Nota = () => {
         )
       )
 
-      setSelectedItemIds(
-        items.map(
-          (item) => item.item_id
+
+      const normalizedPreservedIds =
+        normalizeIds(
+          preserveSelectedIds
         )
-      )
+
+
+      // ==================================================
+      // EDIT:
+      // HANYA ITEM YANG SEBELUMNYA MASUK NOTA YANG DICENTANG
+      // ==================================================
+      if (
+        normalizedPreservedIds.length > 0
+      ) {
+
+        const availableSelectedIds =
+          items
+            .map((item) =>
+              getSuratJalanItemId(item)
+            )
+            .filter(
+              (itemId) =>
+                itemId !== null &&
+                normalizedPreservedIds.includes(
+                  Number(itemId)
+                )
+            )
+            .map((itemId) =>
+              Number(itemId)
+            )
+
+        setSelectedItemIds(
+          availableSelectedIds
+        )
+
+      } else {
+
+        // ==================================================
+        // ADD:
+        // SEMUA ITEM OTOMATIS TERPILIH
+        // ==================================================
+        setSelectedItemIds(
+          items
+            .map((item) =>
+              getSuratJalanItemId(item)
+            )
+            .filter(
+              (itemId) =>
+                itemId !== null &&
+                itemId !== undefined
+            )
+            .map((itemId) =>
+              Number(itemId)
+            )
+        )
+
+      }
+
 
       setSuratJalanSearched(true)
 
@@ -750,8 +965,37 @@ const Nota = () => {
       })
 
     } finally {
+
       setLoadingSuratJalan(false)
+
     }
+
+  }
+
+
+  // ======================================================
+  // FETCH SURAT JALAN
+  // ======================================================
+  const fetchSuratJalan = async () => {
+
+    await fetchSuratJalanByFilter({
+      customerId:
+        formData.customer_id,
+
+      driverId:
+        formData.driver_id,
+
+      tanggalDari:
+        formData.tanggal_kirim_dari,
+
+      tanggalSampai:
+        formData.tanggal_kirim_sampai,
+
+      preserveSelectedIds:
+        editingId !== null
+          ? editSelectedItemIdsRef.current
+          : [],
+    })
 
   }
 
@@ -763,27 +1007,37 @@ const Nota = () => {
 
     if (!isFormOpen) return
 
-    if (editingId !== null) return
 
     if (
-      formData.customer_id &&
-      formData.driver_id &&
-      formData.tanggal_kirim_dari &&
-      formData.tanggal_kirim_sampai
+      !formData.customer_id ||
+      !formData.driver_id ||
+      !formData.tanggal_kirim_dari ||
+      !formData.tanggal_kirim_sampai
     ) {
-
-      fetchSuratJalan()
-
-    } else {
 
       setSuratJalanItems([])
       setSelectedItemIds([])
       setTotalTagihan(0)
       setSuratJalanSearched(false)
 
+      return
+
+    }
+
+    const timer =
+      window.setTimeout(() => {
+
+        fetchSuratJalan()
+
+      }, 150)
+
+
+    return () => {
+      window.clearTimeout(timer)
     }
 
   }, [
+    isFormOpen,
     formData.customer_id,
     formData.driver_id,
     formData.tanggal_kirim_dari,
@@ -804,11 +1058,21 @@ const Nota = () => {
 
     if (event.target.checked) {
 
-      setSelectedItemIds(
-        suratJalanItems.map(
-          (item) => item.item_id
-        )
-      )
+      const ids =
+        suratJalanItems
+          .map((item) =>
+            getSuratJalanItemId(item)
+          )
+          .filter(
+            (id) =>
+              id !== null &&
+              id !== undefined
+          )
+          .map((id) =>
+            Number(id)
+          )
+
+      setSelectedItemIds(ids)
 
     } else {
 
@@ -824,23 +1088,47 @@ const Nota = () => {
   // ======================================================
   const handleSelectItem = (itemId) => {
 
+    const normalizedId =
+      Number(itemId)
+
     setSelectedItemIds(
       (currentIds) => {
 
+        const normalizedCurrentIds =
+          normalizeIds(currentIds)
+
         if (
-          currentIds.includes(itemId)
+          normalizedCurrentIds.includes(
+            normalizedId
+          )
         ) {
 
-          return currentIds.filter(
-            (id) => id !== itemId
-          )
+          const result =
+            normalizedCurrentIds.filter(
+              (id) =>
+                id !== normalizedId
+            )
+
+          if (editingId !== null) {
+            editSelectedItemIdsRef.current =
+              result
+          }
+
+          return result
 
         }
 
-        return [
-          ...currentIds,
-          itemId,
+        const result = [
+          ...normalizedCurrentIds,
+          normalizedId,
         ]
+
+        if (editingId !== null) {
+          editSelectedItemIdsRef.current =
+            result
+        }
+
+        return result
 
       }
     )
@@ -854,11 +1142,18 @@ const Nota = () => {
   const selectedTotal = useMemo(() => {
 
     return suratJalanItems
-      .filter((item) =>
-        selectedItemIds.includes(
-          item.item_id
+      .filter((item) => {
+
+        const itemId =
+          Number(
+            getSuratJalanItemId(item)
+          )
+
+        return selectedItemIds.includes(
+          itemId
         )
-      )
+
+      })
       .reduce(
         (total, item) =>
           total +
@@ -877,100 +1172,117 @@ const Nota = () => {
   // ======================================================
   const openAddForm = () => {
 
-  setEditingId(null)
-  setEditingStatus('')
+    editSelectedItemIdsRef.current = []
 
-  setFormData({
-    tanggal: '',
-    customer_id: '',
-    driver_id: '',
-    tanggal_kirim_dari: '',
-    tanggal_kirim_sampai: '',
-  })
+    setEditingId(null)
+    setEditingStatus('')
 
-  setSuratJalanItems([])
-  setSelectedItemIds([])
-  setTotalTagihan(0)
-  setSuratJalanSearched(false)
+    setFormData({
+      tanggal: '',
+      customer_id: '',
+      driver_id: '',
+      tanggal_kirim_dari: '',
+      tanggal_kirim_sampai: '',
+    })
 
-  setIsFormOpen(true)
-}
+    setSuratJalanItems([])
+    setSelectedItemIds([])
+    setTotalTagihan(0)
+    setSuratJalanSearched(false)
+
+    setIsFormClosing(false)
+    setIsFormOpen(true)
+
+  }
 
 
   // ======================================================
   // EDIT
   // ======================================================
   const openEditForm = (id) => {
-
   const invoice = invoices.find(
-    (item) => item.id === id
+    (item) => Number(item.id) === Number(id)
   )
 
-  if (!invoice) return
+  if (!invoice) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Data tidak ditemukan',
+      text: 'Data nota tagihan tidak ditemukan.',
+      confirmButtonColor: '#51448C',
+    })
+    return
+  }
+
+  const existingItems = Array.isArray(invoice.items)
+    ? invoice.items
+    : []
 
   setEditingId(invoice.id)
 
   setEditingStatus(
-    invoice.status || ''
+    String(invoice.status || '').toLowerCase()
   )
 
+  // SEMUA DATA NOTA LAMA DIMASUKKAN KEMBALI KE FORM
   setFormData({
-    tanggal:
-      formatDateForInput(
-        invoice.tanggal
-      ),
+    tanggal: formatDateForInput(invoice.tanggal),
 
     customer_id:
-      invoice.customerId
+      invoice.customerId !== null &&
+      invoice.customerId !== undefined
         ? String(invoice.customerId)
         : '',
 
     driver_id:
-      invoice.driverId
+      invoice.driverId !== null &&
+      invoice.driverId !== undefined
         ? String(invoice.driverId)
         : '',
 
     tanggal_kirim_dari:
-      formatDateForInput(
-        invoice.tanggalKirimDari
-      ),
+      formatDateForInput(invoice.tanggalKirimDari),
 
     tanggal_kirim_sampai:
-      formatDateForInput(
-        invoice.tanggalKirimSampai
-      ),
+      formatDateForInput(invoice.tanggalKirimSampai),
   })
 
-  // gunakan items dari response apabila tersedia
-  const existingItems =
-    invoice.items || []
+  // Surat jalan lama tetap ditampilkan
+  setSuratJalanItems(existingItems)
 
-  setSuratJalanItems(
-    existingItems
-  )
-
+  // Item lama tetap terpilih
   setSelectedItemIds(
-    existingItems.map(
-      (item) => item.item_id
-    )
+    existingItems
+      .map((item) => {
+        return (
+          item.item_id ??
+          item.id ??
+          item.surat_jalan_item_id
+        )
+      })
+      .filter(
+        (itemId) =>
+          itemId !== null &&
+          itemId !== undefined
+      )
   )
 
+  // Total lama tetap ditampilkan
   setTotalTagihan(
-    Number(
-      invoice.jumlah || 0
-    )
+    Number(invoice.jumlah || 0)
   )
 
   setSuratJalanSearched(
     existingItems.length > 0
   )
 
+  setIsFormClosing(false)
   setIsFormOpen(true)
 }
 
 
   // ======================================================
-  // CLOSE
+  // CLOSE FORM
   // ======================================================
   const closeForm = () => {
 
@@ -981,6 +1293,10 @@ const Nota = () => {
       setIsFormOpen(false)
       setIsFormClosing(false)
       setEditingId(null)
+      setEditingStatus('')
+
+      editSelectedItemIdsRef.current =
+        []
 
       setFormData({
         tanggal: '',
@@ -1005,298 +1321,257 @@ const Nota = () => {
   // ======================================================
   const handleSubmit = async (event) => {
 
-  event.preventDefault()
-
-  // ======================================================
-  // VALIDASI UMUM
-  // ======================================================
-
-  if (!formData.tanggal) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Data belum lengkap',
-      text: 'Tanggal nota wajib diisi.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (!formData.customer_id) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Data belum lengkap',
-      text: 'Customer wajib dipilih.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (!formData.driver_id) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Data belum lengkap',
-      text: 'Driver wajib dipilih.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (
-    !formData.tanggal_kirim_dari ||
-    !formData.tanggal_kirim_sampai
-  ) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Data belum lengkap',
-      text:
-        'Tanggal kirim dari dan sampai wajib diisi.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (
-    formData.tanggal_kirim_dari >
-    formData.tanggal_kirim_sampai
-  ) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Tanggal tidak valid',
-      text:
-        'Tanggal kirim dari tidak boleh lebih besar dari tanggal sampai.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (
-    suratJalanItems.length === 0
-  ) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Surat jalan tidak tersedia',
-      text:
-        'Tidak ada surat jalan yang dapat digunakan untuk nota tagihan.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
-
-  if (
-    selectedItemIds.length === 0
-  ) {
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Surat jalan belum dipilih',
-      text:
-        'Pilih minimal satu surat jalan.',
-      confirmButtonColor: '#51448C',
-    })
-
-    return
-  }
+    event.preventDefault()
 
 
-  // ======================================================
-  // UPDATE
-  // ======================================================
-
-  if (editingId !== null) {
-
-    const isLunas =
-      editingStatus === 'lunas' ||
-      editingStatus === 'Lunas' ||
-      editingStatus === 'dilunaskan' ||
-      editingStatus === 'lunas' ||
-      invoices.find(
-        (item) => item.id === editingId
-      )?.dilunaskan === true
-
-
-    const isCicil =
-      editingStatus === 'sebagian' ||
-      editingStatus === 'cicil' ||
-      editingStatus === 'Cicil'
-
-
-    const statusText =
-      isLunas
-        ? 'Lunas'
-        : 'Cicil'
-
-
-    // ====================================================
-    // KONFIRMASI SWAL
-    // ====================================================
-
-    const confirmResult =
-      await Swal.fire({
-        icon: 'question',
-        title: 'Update Nota Tagihan?',
-        html: `
-          <div style="font-size:13px;color:#707070">
-            Data nota <strong>${
-              invoices.find(
-                (item) =>
-                  item.id === editingId
-              )?.noNota || ''
-            }</strong> akan diperbarui.
-            <br/>
-            Status update:
-            <strong style="color:#51448C">
-              ${statusText}
-            </strong>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Update',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#51448C',
-        cancelButtonColor: '#999999',
-        reverseButtons: true,
-      })
-
-
-    if (!confirmResult.isConfirmed) {
-      return
-    }
-
-
-    try {
-
-      // ==================================================
-      // BODY UPDATE
-      // ==================================================
-
-      const payload = {
-        customer_id:
-          Number(
-            formData.customer_id
-          ),
-
-        tanggal_kirim_dari:
-          formData.tanggal_kirim_dari,
-
-        tanggal_kirim_sampai:
-          formData.tanggal_kirim_sampai,
-
-        item_ids:
-          selectedItemIds,
-      }
-
-
-      let response
-
-
-      // ==================================================
-      // CICIL / SEBAGIAN
-      // ==================================================
-
-      if (isCicil) {
-
-        response =
-          await updateTagihanCicil(
-            editingId,
-            payload
-          )
-
-      }
-
-
-      // ==================================================
-      // LUNAS
-      // ==================================================
-
-      else {
-
-        response =
-          await updateTagihanLunas(
-            editingId,
-            payload
-          )
-
-      }
-
-
-      // ==================================================
-      // BERHASIL
-      // ==================================================
-
-      closeForm()
-
-      await Swal.fire({
-        icon: 'success',
-        title: 'Berhasil',
-        text:
-          response?.message ||
-          'Nota tagihan berhasil diperbarui.',
-        confirmButtonColor: '#51448C',
-      })
-
-      fetchNotaTagihan()
-
-    } catch (error) {
-
-      // ==================================================
-      // ERROR DARI BACKEND
-      // ==================================================
+    // ==================================================
+    // VALIDASI TANGGAL NOTA
+    // ==================================================
+    if (!formData.tanggal) {
 
       Swal.fire({
-        icon: 'error',
-        title: 'Gagal Update Nota',
+        icon: 'warning',
+        title: 'Data belum lengkap',
         text:
-          error?.message ||
-          'Gagal memperbarui nota tagihan.',
+          'Tanggal nota wajib diisi.',
         confirmButtonColor: '#51448C',
       })
 
+      return
+
     }
 
-    return
-  }
+
+    // ==================================================
+    // VALIDASI CUSTOMER
+    // ==================================================
+    if (!formData.customer_id) {
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data belum lengkap',
+        text:
+          'Customer wajib dipilih.',
+        confirmButtonColor: '#51448C',
+      })
+
+      return
+
+    }
 
 
-  // ======================================================
-  // CREATE
-  // ======================================================
+    // ==================================================
+    // VALIDASI DRIVER
+    // ==================================================
+    if (!formData.driver_id) {
 
-  try {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data belum lengkap',
+        text:
+          'Driver wajib dipilih.',
+        confirmButtonColor: '#51448C',
+      })
 
-    let response
+      return
 
-    if (isAllSelected) {
+    }
 
-      response =
-        await createNotaTagihanAll({
-          customer_id:
-            Number(
-              formData.customer_id
-            ),
 
-          tanggal_kirim_dari:
-            formData.tanggal_kirim_dari,
+    // ==================================================
+    // VALIDASI TANGGAL KIRIM
+    // ==================================================
+    if (
+      !formData.tanggal_kirim_dari ||
+      !formData.tanggal_kirim_sampai
+    ) {
 
-          tanggal_kirim_sampai:
-            formData.tanggal_kirim_sampai,
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data belum lengkap',
+        text:
+          'Tanggal kirim dari dan sampai wajib diisi.',
+        confirmButtonColor: '#51448C',
+      })
+
+      return
+
+    }
+
+
+    if (
+      formData.tanggal_kirim_dari >
+      formData.tanggal_kirim_sampai
+    ) {
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tanggal tidak valid',
+        text:
+          'Tanggal kirim dari tidak boleh lebih besar dari tanggal sampai.',
+        confirmButtonColor: '#51448C',
+      })
+
+      return
+
+    }
+
+
+    // ==================================================
+    // VALIDASI SURAT JALAN
+    // ==================================================
+    if (
+      suratJalanItems.length === 0
+    ) {
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Surat jalan tidak tersedia',
+        text:
+          'Tidak ada surat jalan yang dapat digunakan untuk nota tagihan.',
+        confirmButtonColor: '#51448C',
+      })
+
+      return
+
+    }
+
+
+    if (
+      selectedItemIds.length === 0
+    ) {
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Surat jalan belum dipilih',
+        text:
+          'Pilih minimal satu surat jalan.',
+        confirmButtonColor: '#51448C',
+      })
+
+      return
+
+    }
+
+
+    // ==================================================
+    // UPDATE
+    // ==================================================
+    if (editingId !== null) {
+
+      const currentInvoice =
+        invoices.find(
+          (item) =>
+            Number(item.id) ===
+            Number(editingId)
+        )
+
+
+      if (!currentInvoice) {
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Data tidak ditemukan',
+          text:
+            'Data nota yang akan diperbarui tidak ditemukan.',
+          confirmButtonColor: '#51448C',
         })
 
-    } else {
+        return
 
-      response =
-        await createNotaTagihanChecked({
+      }
+
+
+      const currentStatus =
+        String(
+          currentInvoice.status ||
+          editingStatus ||
+          ''
+        ).toLowerCase()
+
+
+      const isLunas =
+        currentStatus === 'lunas' ||
+        currentStatus === 'dilunaskan' ||
+        currentInvoice.dilunaskan === true
+
+
+      const useLunasApi =
+        isLunas
+
+
+      const statusText =
+        useLunasApi
+          ? 'Lunas'
+          : currentStatus === 'cicil'
+            ? 'Cicil'
+            : 'Belum Bayar'
+
+
+      const confirmResult =
+        await Swal.fire({
+          icon: 'question',
+          title: 'Update Nota Tagihan?',
+          html: `
+            <div style="font-size:13px;color:#707070;line-height:1.8">
+              <div>
+                No. Nota:
+                <strong>${currentInvoice.noNota || '-'}</strong>
+              </div>
+
+              <div>
+                Customer:
+                <strong>${currentInvoice.customer || '-'}</strong>
+              </div>
+
+              <div>
+                Driver:
+                <strong>${currentInvoice.driver || '-'}</strong>
+              </div>
+
+              <div>
+                Surat Jalan:
+                <strong>${selectedItemIds.length} item</strong>
+              </div>
+
+              <div>
+                Status:
+                <strong style="color:#51448C">
+                  ${statusText}
+                </strong>
+              </div>
+
+              <div style="margin-top:8px">
+                Data nota akan diperbarui berdasarkan
+                customer, driver, tanggal kirim,
+                dan surat jalan yang dipilih.
+              </div>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText:
+            'Ya, Update',
+          cancelButtonText:
+            'Batal',
+          confirmButtonColor:
+            '#51448C',
+          cancelButtonColor:
+            '#999999',
+          reverseButtons: true,
+        })
+
+
+      if (
+        !confirmResult.isConfirmed
+      ) {
+        return
+      }
+
+
+      try {
+
+        const payload = {
+
           customer_id:
             Number(
               formData.customer_id
@@ -1309,73 +1584,133 @@ const Nota = () => {
             formData.tanggal_kirim_sampai,
 
           item_ids:
-            selectedItemIds,
+            normalizeIds(
+              selectedItemIds
+            ),
+
+        }
+
+
+        let response
+
+
+        if (useLunasApi) {
+
+          response =
+            await updateNotaTagihanLunas(
+              editingId,
+              payload
+            )
+
+        } else {
+
+          response =
+            await updateNotaTagihanCicil(
+              editingId,
+              payload
+            )
+
+        }
+
+
+        closeForm()
+
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text:
+            response?.message ||
+            'Nota tagihan berhasil diperbarui.',
+          confirmButtonColor:
+            '#51448C',
         })
+
+
+        await fetchNotaTagihan()
+
+      } catch (error) {
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Update Nota',
+          text:
+            error?.message ||
+            'Gagal memperbarui nota tagihan.',
+          confirmButtonColor:
+            '#51448C',
+        })
+
+      }
+
+      return
+
     }
 
-    closeForm()
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text:
-        response?.message ||
-        'Nota tagihan berhasil dibuat.',
-      confirmButtonColor: '#51448C',
-    })
-
-    fetchNotaTagihan()
-
-  } catch (error) {
-
-    Swal.fire({
-      icon: 'error',
-      title: 'Gagal',
-      text:
-        error?.message ||
-        'Gagal membuat nota tagihan.',
-      confirmButtonColor: '#51448C',
-    })
-
-  }
-}
-
-
-  // ======================================================
-  // PEMBAYARAN
-  // ======================================================
-  const handlePayment = async (row) => {
-
-    const result =
-      await Swal.fire({
-        title: 'Pembayaran',
-        text:
-          `Apakah ingin mencatat pembayaran untuk ${row.noNota}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Bayar',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#51448C',
-        cancelButtonColor: '#999999',
-      })
-
-    if (!result.isConfirmed) return
-
+    // ==================================================
+    // CREATE
+    // ==================================================
     try {
 
-      await updateNotaTagihanLunas(
-        row.id
-      )
+      let response
 
-      Swal.fire({
+
+      if (isAllSelected) {
+
+        response =
+          await createNotaTagihanAll({
+            customer_id:
+              Number(
+                formData.customer_id
+              ),
+
+            tanggal_kirim_dari:
+              formData.tanggal_kirim_dari,
+
+            tanggal_kirim_sampai:
+              formData.tanggal_kirim_sampai,
+          })
+
+      } else {
+
+        response =
+          await createNotaTagihanChecked({
+            customer_id:
+              Number(
+                formData.customer_id
+              ),
+
+            tanggal_kirim_dari:
+              formData.tanggal_kirim_dari,
+
+            tanggal_kirim_sampai:
+              formData.tanggal_kirim_sampai,
+
+            item_ids:
+              normalizeIds(
+                selectedItemIds
+              ),
+          })
+
+      }
+
+
+      closeForm()
+
+
+      await Swal.fire({
         icon: 'success',
         title: 'Berhasil',
         text:
-          'Pembayaran berhasil dicatat.',
-        confirmButtonColor: '#51448C',
+          response?.message ||
+          'Nota tagihan berhasil dibuat.',
+        confirmButtonColor:
+          '#51448C',
       })
 
-      fetchNotaTagihan()
+
+      await fetchNotaTagihan()
 
     } catch (error) {
 
@@ -1384,12 +1719,581 @@ const Nota = () => {
         title: 'Gagal',
         text:
           error?.message ||
-          'Gagal mencatat pembayaran.',
-        confirmButtonColor: '#51448C',
+          'Gagal membuat nota tagihan.',
+        confirmButtonColor:
+          '#51448C',
       })
 
     }
 
+  }
+
+
+  // ======================================================
+  // PEMBAYARAN
+  // ======================================================
+  const handlePayment = (row) => {
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0]
+
+
+    const sisaTagihan =
+      Number(
+        row.sisa || 0
+      )
+
+
+    setPaymentData({
+
+      id:
+        row.id,
+
+      noNota:
+        row.noNota || '',
+
+      tanggalBayar:
+        today,
+
+      totalTagihan:
+        Number(
+          row.jumlah || 0
+        ),
+
+      sisaTagihan:
+        sisaTagihan,
+
+      status:
+        'normal',
+
+      jumlahBayar:
+        '',
+
+    })
+
+
+    setIsPaymentClosing(false)
+    setIsPaymentOpen(true)
+
+  }
+
+
+  // ======================================================
+  // CHANGE PEMBAYARAN
+  // ======================================================
+  const handlePaymentChange = (event) => {
+
+    const {
+      name,
+      value,
+    } = event.target
+
+
+    setPaymentData((current) => {
+
+      if (
+        name === 'status' &&
+        value === 'dilunaskan'
+      ) {
+
+        return {
+          ...current,
+          status:
+            value,
+          jumlahBayar:
+            current.sisaTagihan,
+        }
+
+      }
+
+
+      if (
+        name === 'status' &&
+        value === 'normal'
+      ) {
+
+        return {
+          ...current,
+          status:
+            value,
+          jumlahBayar:
+            '',
+        }
+
+      }
+
+
+      return {
+        ...current,
+        [name]:
+          value,
+      }
+
+    })
+
+  }
+
+
+  // ======================================================
+  // CLOSE PAYMENT
+  // ======================================================
+  const closePaymentForm = () => {
+
+    if (paymentLoading) return
+
+    setIsPaymentClosing(true)
+
+    window.setTimeout(() => {
+
+      setIsPaymentOpen(false)
+      setIsPaymentClosing(false)
+
+      setPaymentData({
+        id: null,
+        noNota: '',
+        tanggalBayar: '',
+        totalTagihan: 0,
+        sisaTagihan: 0,
+        status: 'normal',
+        jumlahBayar: '',
+      })
+
+    }, 250)
+
+  }
+
+
+  // ======================================================
+  // SUBMIT PAYMENT
+  // ======================================================
+  const handlePaymentSubmit =
+    async (event) => {
+
+      event.preventDefault()
+
+
+      if (!paymentData.tanggalBayar) {
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Tanggal belum diisi',
+          text:
+            'Tanggal bayar wajib diisi.',
+          confirmButtonColor:
+            '#51448C',
+        })
+
+        return
+
+      }
+
+
+      const jumlahBayar =
+        Number(
+          paymentData.jumlahBayar || 0
+        )
+
+
+      const sisaTagihan =
+        Number(
+          paymentData.sisaTagihan || 0
+        )
+
+
+      if (jumlahBayar <= 0) {
+
+        Swal.fire({
+          icon: 'warning',
+          title:
+            'Jumlah pembayaran tidak valid',
+          text:
+            'Jumlah bayar harus lebih dari 0.',
+          confirmButtonColor:
+            '#51448C',
+        })
+
+        return
+
+      }
+
+
+      if (
+        jumlahBayar >
+        sisaTagihan
+      ) {
+
+        Swal.fire({
+          icon: 'warning',
+          title:
+            'Jumlah pembayaran terlalu besar',
+          text:
+            `Jumlah pembayaran tidak boleh lebih besar dari sisa tagihan ${formatRupiah(sisaTagihan)}.`,
+          confirmButtonColor:
+            '#51448C',
+        })
+
+        return
+
+      }
+
+
+      const isLunas =
+        paymentData.status ===
+        'dilunaskan'
+
+
+      const statusText =
+        isLunas
+          ? 'Lunas'
+          : 'Normal / Cicil'
+
+
+      const confirmResult =
+        await Swal.fire({
+
+          icon: 'question',
+
+          title:
+            'Simpan Pembayaran?',
+
+          html: `
+            <div style="font-size:13px;color:#707070;line-height:1.8">
+
+              <div>
+                No. Nota:
+                <strong>${paymentData.noNota}</strong>
+              </div>
+
+              <div>
+                Status:
+                <strong style="color:#51448C">
+                  ${statusText}
+                </strong>
+              </div>
+
+              <div>
+                Jumlah:
+                <strong style="color:#51448C">
+                  ${formatRupiah(jumlahBayar)}
+                </strong>
+              </div>
+
+            </div>
+          `,
+
+          showCancelButton:
+            true,
+
+          confirmButtonText:
+            'Ya, Simpan',
+
+          cancelButtonText:
+            'Batal',
+
+          confirmButtonColor:
+            '#51448C',
+
+          cancelButtonColor:
+            '#999999',
+
+          reverseButtons:
+            true,
+
+        })
+
+
+      if (
+        !confirmResult.isConfirmed
+      ) {
+        return
+      }
+
+
+      const payload = {
+
+        status:
+          isLunas
+            ? 'dilunaskan'
+            : 'normal',
+
+        tanggal_bayar:
+          paymentData.tanggalBayar,
+
+        jumlah_bayar:
+          jumlahBayar,
+
+      }
+
+
+      try {
+
+        setPaymentLoading(true)
+
+        let response
+
+
+        if (!isLunas) {
+
+          response =
+            await bayarCicil(
+              paymentData.id,
+              payload
+            )
+
+        } else {
+
+          response =
+            await bayarLunas(
+              paymentData.id,
+              payload
+            )
+
+        }
+
+
+        closePaymentForm()
+
+
+        await Swal.fire({
+          icon: 'success',
+          title:
+            'Pembayaran Berhasil',
+          text:
+            response?.message ||
+            'Pembayaran berhasil dicatat.',
+          confirmButtonColor:
+            '#51448C',
+        })
+
+
+        await fetchNotaTagihan()
+
+      } catch (error) {
+
+        Swal.fire({
+          icon: 'error',
+          title:
+            'Pembayaran Gagal',
+          text:
+            error?.message ||
+            'Gagal mencatat pembayaran.',
+          confirmButtonColor:
+            '#51448C',
+        })
+
+      } finally {
+
+        setPaymentLoading(false)
+
+      }
+
+    }
+
+
+  // ======================================================
+  // DELETE
+  // ======================================================
+  const handleDelete = async (row) => {
+
+    const result =
+      await Swal.fire({
+
+        icon: 'warning',
+
+        title:
+          'Hapus Nota Tagihan?',
+
+        html: `
+          <div style="font-size:13px;color:#707070">
+            Nota <strong>${row.noNota || '-'}</strong>
+            akan dihapus.
+            <br/>
+            Data yang sudah dihapus tidak dapat dikembalikan.
+          </div>
+        `,
+
+        showCancelButton:
+          true,
+
+        confirmButtonText:
+          'Ya, Hapus',
+
+        cancelButtonText:
+          'Batal',
+
+        confirmButtonColor:
+          '#d33',
+
+        cancelButtonColor:
+          '#999999',
+
+        reverseButtons:
+          true,
+
+      })
+
+
+    if (!result.isConfirmed) {
+      return
+    }
+
+
+    try {
+
+      const response =
+        await deleteNotaTagihan(
+          row.id
+        )
+
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text:
+          response?.message ||
+          'Nota tagihan berhasil dihapus.',
+        confirmButtonColor:
+          '#51448C',
+      })
+
+
+      await fetchNotaTagihan()
+
+    } catch (error) {
+
+      Swal.fire({
+        icon: 'error',
+        title:
+          'Gagal Menghapus',
+        text:
+          error?.message ||
+          'Nota tagihan gagal dihapus.',
+        confirmButtonColor:
+          '#51448C',
+      })
+
+    }
+
+  }
+
+
+  // ======================================================
+  // PRATINJAU NOTA
+  // ======================================================
+  const handlePreview = async (row) => {
+    try {
+      setPreviewInvoice(row)
+      setPreviewData('')
+      setPreviewLoading(true)
+      setIsPreviewClosing(false)
+      setIsPreviewOpen(true)
+
+      const response = await pratinjauNotaTagihan(row.id)
+
+      const result =
+        response?.data ??
+        response?.preview ??
+        response?.content ??
+        response?.hasil ??
+        response
+
+      if (typeof result === 'string') {
+        setPreviewData(result)
+      } else if (result !== null && result !== undefined) {
+        setPreviewData(JSON.stringify(result, null, 2))
+      } else {
+        setPreviewData('Data pratinjau nota tidak tersedia.')
+      }
+    } catch (error) {
+      setIsPreviewOpen(false)
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Memuat Pratinjau',
+        text:
+          error?.message ||
+          'Pratinjau nota gagal diambil.',
+        confirmButtonColor: '#51448C',
+      })
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  // ======================================================
+  // PRINT ULANG NOTA
+  // ======================================================
+  const handlePrintUlang = async () => {
+    if (!previewInvoice?.id || printLoading) return
+
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Print Ulang Nota?',
+      html: `
+        <div style="font-size:13px;color:#707070;line-height:1.8">
+          Nota <strong>${previewInvoice.noNota || '-'}</strong>
+          akan dikirim ke API print ulang.
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Print Ulang',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#51448C',
+      cancelButtonColor: '#999999',
+      reverseButtons: true,
+    })
+
+    if (!result.isConfirmed) return
+
+    try {
+      setPrintLoading(true)
+
+      const response =
+        await printUlangNotaTagihan(
+          previewInvoice.id
+        )
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Print Ulang Berhasil',
+        text:
+          response?.message ||
+          'Perintah print ulang berhasil dikirim.',
+        confirmButtonColor: '#51448C',
+      })
+
+      // Refresh jumlah cetak / waktu cetak terbaru
+      await fetchNotaTagihan()
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Print Ulang Gagal',
+        text:
+          error?.message ||
+          'Gagal mengirim perintah print ulang.',
+        confirmButtonColor: '#51448C',
+      })
+    } finally {
+      setPrintLoading(false)
+    }
+  }
+
+  // ======================================================
+  // CLOSE PRATINJAU
+  // ======================================================
+  const closePreview = () => {
+    if (printLoading) return
+
+    setIsPreviewClosing(true)
+
+    window.setTimeout(() => {
+      setIsPreviewOpen(false)
+      setIsPreviewClosing(false)
+      setPreviewData('')
+      setPreviewInvoice(null)
+    }, 200)
   }
 
 
@@ -1401,53 +2305,80 @@ const Nota = () => {
     if (!status)
       return 'Belum Bayar'
 
+
+    const normalized =
+      String(status)
+        .toLowerCase()
+
+
     if (
-      status === 'belum_bayar' ||
-      status === 'belum bayar'
+      normalized ===
+        'belum_bayar' ||
+      normalized ===
+        'belum bayar'
     ) {
 
       return 'Belum Bayar'
 
     }
 
-    if (status === 'cicil')
+
+    if (
+      normalized ===
+      'cicil'
+    ) {
+
       return 'Cicil'
 
-    if (status === 'lunas')
+    }
+
+
+    if (
+      normalized ===
+      'lunas'
+    ) {
+
       return 'Lunas'
+
+    }
+
 
     return status
 
   }
 
 
+  // ======================================================
+  // RENDER STATUS
+  // ======================================================
   const renderStatus = (status) => {
 
     const formattedStatus =
       formatStatus(status)
 
-    let className = ''
+
+    let className =
+      'bg-[#f04423]'
+
 
     if (
-      formattedStatus === 'Lunas'
+      formattedStatus ===
+      'Lunas'
     ) {
 
       className =
         'bg-[#459653]'
 
     } else if (
-      formattedStatus === 'Cicil'
+      formattedStatus ===
+      'Cicil'
     ) {
 
       className =
         'bg-[#d0ad00]'
 
-    } else {
-
-      className =
-        'bg-[#f04423]'
-
     }
+
 
     return (
       <span
@@ -1464,68 +2395,95 @@ const Nota = () => {
   // TABLE COLUMNS
   // ======================================================
   const columns = [
+
     {
-      key: 'noNota',
-      label: 'No. Nota',
+      key:
+        'noNota',
+
+      label:
+        'No. Nota',
     },
 
     {
-      key: 'tanggal',
-      label: 'Tanggal',
+      key:
+        'tanggal',
 
-      render: (row) =>
-        formatDateDisplay(
-          row.tanggal
+      label:
+        'Tanggal',
+
+      render:
+        (row) =>
+          formatDateDisplay(
+            row.tanggal
+          ),
+    },
+
+    {
+      key:
+        'customer',
+
+      label:
+        'Nama Customer',
+    },
+
+    {
+      key:
+        'jumlah',
+
+      label:
+        'Jumlah',
+
+      render:
+        (row) =>
+          formatRupiah(
+            row.jumlah
+          ),
+    },
+
+    {
+      key:
+        'status',
+
+      label:
+        'Status',
+
+      render:
+        (row) =>
+          renderStatus(
+            row.status
+          ),
+    },
+
+    {
+      key:
+        'update',
+
+      label:
+        'Update',
+
+      render:
+        (row) => (
+
+          <button
+            type="button"
+            onClick={() =>
+              handlePayment(row)
+            }
+            className="inline-flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#433878]"
+          >
+
+            <span className="mr-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white text-[9px]">
+              $
+            </span>
+
+            Pembayaran
+
+          </button>
+
         ),
+
     },
 
-    {
-      key: 'customer',
-      label: 'Nama Customer',
-    },
-
-    {
-      key: 'jumlah',
-      label: 'Jumlah',
-
-      render: (row) =>
-        formatRupiah(
-          row.jumlah
-        ),
-    },
-
-    {
-      key: 'status',
-      label: 'Status',
-
-      render: (row) =>
-        renderStatus(
-          row.status
-        ),
-    },
-
-    {
-      key: 'update',
-      label: 'Update',
-
-      render: (row) => (
-        <button
-          type="button"
-          onClick={() =>
-            handlePayment(row)
-          }
-          className="inline-flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#433878]"
-        >
-
-          <span className="mr-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white text-[9px]">
-            $
-          </span>
-
-          Pembayaran
-
-        </button>
-      ),
-    },
   ]
 
 
@@ -1533,7 +2491,9 @@ const Nota = () => {
   // RETURN
   // ======================================================
   return (
+
     <main className="min-h-screen bg-white px-3 py-5 sm:px-5 sm:py-7 lg:ml-64 lg:px-8 lg:py-10">
+
 
       {/* ==================================================
           HEADER
@@ -1550,6 +2510,7 @@ const Nota = () => {
             stroke="currentColor"
             strokeWidth={2}
           >
+
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -1603,43 +2564,40 @@ const Nota = () => {
 
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap xl:w-auto">
 
-            {/* CUSTOMER FILTER */}
-            <select
-              value={selectedCustomer}
-              onChange={(e) =>
-                setSelectedCustomer(
-                  e.target.value
-                )
-              }
-              className="h-10 w-full rounded-md border border-[#e0e0e5] bg-white px-3 text-xs text-[#51448C] outline-none focus:ring-2 focus:ring-[#51448C]/20 sm:w-[200px]"
-            >
+            <div className="w-full sm:w-[200px]">
 
-              <option value="">
-                Pilih Customer
-              </option>
+              <SearchableDropdown
+                label="Customer"
+                value={
+                  selectedCustomer
+                }
+                options={
+                  customers
+                }
+                onChange={
+                  (value) =>
+                    setSelectedCustomer(
+                      value
+                    )
+                }
+                placeholder="Pilih Customer"
+                loading={
+                  loadingCustomer
+                }
+                showLabel={false}
+              />
 
-              {customers.map(
-                (customer) => (
-                  <option
-                    key={customer.id}
-                    value={customer.id}
-                  >
-                    {customer.name}
-                  </option>
-                )
-              )}
-
-            </select>
+            </div>
 
 
-            {/* FILTER */}
             <div className="relative">
 
               <button
                 type="button"
                 onClick={() =>
                   setIsFilterOpen(
-                    (value) => !value
+                    (value) =>
+                      !value
                   )
                 }
                 className={`inline-flex h-10 w-full items-center justify-center rounded-md border px-3 text-xs font-medium transition sm:w-auto ${
@@ -1678,7 +2636,9 @@ const Nota = () => {
 
                       <input
                         type="date"
-                        value={filterStart}
+                        value={
+                          filterStart
+                        }
                         onChange={(e) =>
                           setFilterStart(
                             e.target.value
@@ -1701,7 +2661,9 @@ const Nota = () => {
 
                       <input
                         type="date"
-                        value={filterEnd}
+                        value={
+                          filterEnd
+                        }
                         onChange={(e) =>
                           setFilterEnd(
                             e.target.value
@@ -1731,7 +2693,9 @@ const Nota = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        setIsFilterOpen(false)
+                        setIsFilterOpen(
+                          false
+                        )
                       }
                       className="rounded-md bg-[#51448C] px-3 py-1.5 text-xs font-medium text-white"
                     >
@@ -1747,7 +2711,6 @@ const Nota = () => {
             </div>
 
 
-            {/* SEARCH */}
             <div className="flex h-10 w-full items-center rounded-md border border-[#e0e0e5] bg-white px-3 sm:w-[180px]">
 
               <svg
@@ -1793,7 +2756,7 @@ const Nota = () => {
 
 
         {/* ==================================================
-            TABLE NOTA
+            TABLE
         ================================================== */}
         <div className="w-full overflow-x-auto">
 
@@ -1807,29 +2770,101 @@ const Nota = () => {
 
             <DataTable
               columns={columns}
-              data={filteredInvoices}
+              data={
+                filteredInvoices
+              }
               actionLabel="Action"
               tableClassName="min-w-[850px] text-xs sm:text-sm"
               actions={(row) => (
-                <button
-                  type="button"
-                  onClick={() =>
-                    openEditForm(
-                      row.id
-                    )
-                  }
-                  className="inline-flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#433878]"
-                >
 
-                  <img
-                    src={editIcon}
-                    alt=""
-                    className="mr-1.5 h-3.5 w-3.5 object-contain"
-                  />
+                <div className="flex items-center gap-2">
 
-                  Edit
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openEditForm(
+                        row.id
+                      )
+                    }
+                    className="inline-flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#433878]"
+                  >
 
-                </button>
+                    <img
+                      src={editIcon}
+                      alt=""
+                      className="mr-1.5 h-3.5 w-3.5 object-contain"
+                    />
+
+                    Edit
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDelete(
+                        row
+                      )
+                    }
+                    className="inline-flex items-center whitespace-nowrap rounded-md bg-[#d9534f] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#c9302c]"
+                  >
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="mr-1.5 h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 7h12M9 7V4h6v3m-8 0 .75 13h6.5L15 7M10 11v5M14 11v5"
+                      />
+
+                    </svg>
+
+                    Delete
+
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePreview(row)
+                    }
+                    className="inline-flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#433878]"
+                  >
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="mr-1.5 h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="2.5"
+                      />
+                    </svg>
+
+                    Pratinjau
+
+                  </button>
+
+                </div>
+
               )}
             />
 
@@ -1841,7 +2876,7 @@ const Nota = () => {
 
 
       {/* ==================================================
-          MODAL
+          MODAL FORM
       ================================================== */}
       {isFormOpen && (
 
@@ -1863,9 +2898,7 @@ const Nota = () => {
             }`}
           >
 
-            {/* ==================================================
-                HEADER MODAL
-            ================================================== */}
+            {/* HEADER */}
             <div className="shrink-0 border-b border-[#e5e3ea] bg-[#f7f7f7] px-4 py-4 sm:px-6">
 
               <div className="flex items-start justify-between gap-3">
@@ -1909,7 +2942,9 @@ const Nota = () => {
                   <div className="min-w-0">
 
                     <h2 className="truncate text-base font-bold text-[#51448C] sm:text-xl">
-                      INPUT & EDIT NOTA TAGIHAN
+                      {editingId !== null
+                        ? 'EDIT NOTA TAGIHAN'
+                        : 'INPUT NOTA TAGIHAN'}
                     </h2>
 
                     <p className="mt-0.5 text-[10px] text-[#707070] sm:text-xs">
@@ -1923,7 +2958,9 @@ const Nota = () => {
 
                 <button
                   type="button"
-                  onClick={closeForm}
+                  onClick={
+                    closeForm
+                  }
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-2xl leading-none text-[#51448C] transition hover:bg-[#ebe8f4] hover:text-[#33295f]"
                 >
                   ×
@@ -1934,16 +2971,16 @@ const Nota = () => {
             </div>
 
 
-            {/* ==================================================
-                MODAL CONTENT
-            ================================================== */}
+            {/* CONTENT */}
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 scrollbar-thin sm:px-6 sm:py-5">
 
-              <form onSubmit={handleSubmit}>
+              <form
+                onSubmit={
+                  handleSubmit
+                }
+              >
 
-                {/* ==================================================
-                    NO NOTA + TANGGAL
-                ================================================== */}
+                {/* NO NOTA + TANGGAL */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 
                   <div>
@@ -1957,8 +2994,8 @@ const Nota = () => {
                         editingId !== null
                           ? invoices.find(
                               (item) =>
-                                item.id ===
-                                editingId
+                                Number(item.id) ===
+                                Number(editingId)
                             )?.noNota || ''
                           : ''
                       }
@@ -1993,9 +3030,7 @@ const Nota = () => {
                 </div>
 
 
-                {/* ==================================================
-                    CUSTOMER + DRIVER
-                ================================================== */}
+                {/* CUSTOMER + DRIVER */}
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
 
                   <SearchableDropdown
@@ -2003,8 +3038,16 @@ const Nota = () => {
                     value={
                       formData.customer_id
                     }
-                    options={customers}
-                    onChange={(value) =>
+                    options={
+                      customers
+                    }
+                    onChange={(value) => {
+
+                      editSelectedItemIdsRef.current =
+                        []
+
+                      setSelectedItemIds([])
+
                       setFormData(
                         (current) => ({
                           ...current,
@@ -2012,14 +3055,14 @@ const Nota = () => {
                             value,
                         })
                       )
-                    }
+
+                    }}
                     placeholder="Pilih Customer"
                     loading={
                       loadingCustomer
                     }
                     disabled={
-                      loadingCustomer ||
-                      editingId !== null
+                      loadingCustomer
                     }
                   />
 
@@ -2029,8 +3072,16 @@ const Nota = () => {
                     value={
                       formData.driver_id
                     }
-                    options={drivers}
-                    onChange={(value) =>
+                    options={
+                      drivers
+                    }
+                    onChange={(value) => {
+
+                      editSelectedItemIdsRef.current =
+                        []
+
+                      setSelectedItemIds([])
+
                       setFormData(
                         (current) => ({
                           ...current,
@@ -2038,29 +3089,26 @@ const Nota = () => {
                             value,
                         })
                       )
-                    }
+
+                    }}
                     placeholder="Pilih Driver"
                     loading={
                       loadingDriver
                     }
                     disabled={
-                      loadingDriver ||
-                      editingId !== null
+                      loadingDriver
                     }
                   />
 
                 </div>
 
 
-                {/* ==================================================
-                    TANGGAL KIRIM
-                ================================================== */}
+                {/* TANGGAL KIRIM */}
                 <div className="mt-4">
 
                   <label className="mb-1.5 block text-xs font-medium text-[#333333]">
                     Tanggal Kirim
                   </label>
-
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end sm:gap-4">
 
@@ -2115,9 +3163,7 @@ const Nota = () => {
                 </div>
 
 
-                {/* ==================================================
-                    INFO LOAD
-                ================================================== */}
+                {/* LOADING */}
                 {loadingSuratJalan && (
 
                   <div className="mt-4 flex items-center rounded-lg border border-[#ddd8f0] bg-[#f0eefb] px-3 py-2.5 text-[10px] text-[#51448C]">
@@ -2131,9 +3177,7 @@ const Nota = () => {
                 )}
 
 
-                {/* ==================================================
-                    TABEL SURAT JALAN
-                ================================================== */}
+                {/* TABEL SURAT JALAN */}
                 <div className="mt-4">
 
                   <div className="mb-2 flex items-center justify-between">
@@ -2150,6 +3194,7 @@ const Nota = () => {
 
                     </div>
 
+
                     {suratJalanItems.length > 0 && (
 
                       <span className="rounded-full bg-[#eeebf7] px-2.5 py-1 text-[9px] font-medium text-[#51448C]">
@@ -2161,13 +3206,10 @@ const Nota = () => {
                   </div>
 
 
-                  {/* OUTER TABLE SCROLL */}
                   <div className="w-full overflow-hidden rounded-xl border border-[#dedde5] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
 
-                    {/* Horizontal Scroll */}
                     <div className="w-full overflow-x-auto scrollbar-thin">
 
-                      {/* Vertical Scroll */}
                       <div className="max-h-[300px] min-w-[760px] overflow-y-auto scrollbar-thin">
 
                         <table className="w-full text-left text-[10px]">
@@ -2231,16 +3273,27 @@ const Nota = () => {
                               suratJalanItems.map(
                                 (item) => {
 
+                                  const itemId =
+                                    getSuratJalanItemId(
+                                      item
+                                    )
+
+                                  const normalizedItemId =
+                                    Number(
+                                      itemId
+                                    )
+
                                   const isChecked =
                                     selectedItemIds.includes(
-                                      item.item_id
+                                      normalizedItemId
                                     )
+
 
                                   return (
 
                                     <tr
                                       key={
-                                        item.item_id
+                                        `${itemId}-${item.no_surat_jalan || ''}`
                                       }
                                       className={`transition ${
                                         isChecked
@@ -2249,11 +3302,13 @@ const Nota = () => {
                                       } hover:bg-[#f8f7fc]`}
                                     >
 
-                                      <td className={`sticky left-0 z-10 px-2 py-3 text-center ${
-                                        isChecked
-                                          ? 'bg-[#faf9ff]'
-                                          : 'bg-white'
-                                      }`}>
+                                      <td
+                                        className={`sticky left-0 z-10 px-2 py-3 text-center ${
+                                          isChecked
+                                            ? 'bg-[#faf9ff]'
+                                            : 'bg-white'
+                                        }`}
+                                      >
 
                                         <input
                                           type="checkbox"
@@ -2262,7 +3317,7 @@ const Nota = () => {
                                           }
                                           onChange={() =>
                                             handleSelectItem(
-                                              item.item_id
+                                              normalizedItemId
                                             )
                                           }
                                           className="h-4 w-4 cursor-pointer accent-[#51448C]"
@@ -2273,17 +3328,20 @@ const Nota = () => {
 
                                       <td className="whitespace-nowrap px-3 py-3 font-medium text-[#444444]">
                                         {
-                                          item.no_surat_jalan
+                                          item.no_surat_jalan ||
+                                          '-'
                                         }
                                       </td>
 
 
                                       <td className="whitespace-nowrap px-3 py-3">
+
                                         {item.tanggal
                                           ? formatDateDisplay(
                                               item.tanggal
                                             )
                                           : '-'}
+
                                       </td>
 
 
@@ -2292,11 +3350,13 @@ const Nota = () => {
                                         <div
                                           className="truncate"
                                           title={
-                                            item.nama_barang
+                                            item.nama_barang ||
+                                            ''
                                           }
                                         >
                                           {
-                                            item.nama_barang
+                                            item.nama_barang ||
+                                            '-'
                                           }
                                         </div>
 
@@ -2305,22 +3365,27 @@ const Nota = () => {
 
                                       <td className="px-3 py-3 text-center">
                                         {
-                                          item.qty
+                                          item.qty ??
+                                          0
                                         }
                                       </td>
 
 
                                       <td className="whitespace-nowrap px-3 py-3 text-right">
+
                                         {formatRupiah(
                                           item.harga_jual
                                         )}
+
                                       </td>
 
 
                                       <td className="whitespace-nowrap px-3 py-3 text-right font-medium text-[#333333]">
+
                                         {formatRupiah(
                                           item.total
                                         )}
+
                                       </td>
 
                                     </tr>
@@ -2354,11 +3419,13 @@ const Nota = () => {
                                         stroke="currentColor"
                                         strokeWidth={1.5}
                                       >
+
                                         <path
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                           d="M9 5h6M9 9h6M9 13h3m-7 8h10a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2Z"
                                         />
+
                                       </svg>
 
                                       <span className="text-[11px] font-medium text-[#8f899d]">
@@ -2367,6 +3434,18 @@ const Nota = () => {
 
                                       <span className="mt-1 text-[9px] text-[#b0abb8]">
                                         Pilih customer, driver, dan tanggal kirim
+                                      </span>
+
+                                    </div>
+
+                                  ) : loadingSuratJalan ? (
+
+                                    <div className="flex flex-col items-center justify-center">
+
+                                      <span className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-[#51448C]/20 border-t-[#51448C]" />
+
+                                      <span className="text-[10px] text-[#8f899d]">
+                                        Memuat surat jalan...
                                       </span>
 
                                     </div>
@@ -2383,11 +3462,13 @@ const Nota = () => {
                                         stroke="currentColor"
                                         strokeWidth={1.5}
                                       >
+
                                         <path
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                           d="M9 5h6M9 9h6M9 13h3m-7 8h10a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2Z"
                                         />
+
                                       </svg>
 
                                       <span className="text-[11px] font-medium text-[#8f899d]">
@@ -2417,9 +3498,6 @@ const Nota = () => {
                           </tbody>
 
 
-                          {/* ==================================================
-                              TOTAL
-                          ================================================== */}
                           <tfoot>
 
                             <tr className="border-t border-[#dedde5] bg-[#fafafa]">
@@ -2434,12 +3512,7 @@ const Nota = () => {
                               <td className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[#333333]">
 
                                 {formatRupiah(
-                                  selectedItemIds.length ===
-                                    suratJalanItems.length &&
-                                  suratJalanItems.length >
-                                    0
-                                    ? totalTagihan
-                                    : selectedTotal
+                                  selectedTotal
                                 )}
 
                               </td>
@@ -2459,35 +3532,32 @@ const Nota = () => {
                 </div>
 
 
-                {/* ==================================================
-                    WARNING
-                ================================================== */}
+                {/* WARNING */}
                 {suratJalanSearched &&
                   suratJalanItems.length > 0 &&
-                  selectedItemIds.length ===
-                    0 && (
+                  selectedItemIds.length === 0 && (
 
-                  <div className="mt-2 flex items-center rounded-md bg-red-50 px-3 py-2 text-[10px] text-red-500">
+                    <div className="mt-2 flex items-center rounded-md bg-red-50 px-3 py-2 text-[10px] text-red-500">
 
-                    <span className="mr-1.5">
-                      ⚠
-                    </span>
+                      <span className="mr-1.5">
+                        ⚠
+                      </span>
 
-                    Kolom tidak boleh kosong
+                      Pilih minimal satu surat jalan
 
-                  </div>
+                    </div>
 
-                )}
+                  )}
 
 
-                {/* ==================================================
-                    FOOTER BUTTON
-                ================================================== */}
+                {/* FOOTER */}
                 <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[#e5e3ea] pt-4 sm:flex-row sm:items-center sm:justify-between">
 
                   <button
                     type="button"
-                    onClick={closeForm}
+                    onClick={
+                      closeForm
+                    }
                     className="w-full rounded-lg border border-[#dedbe6] bg-white px-4 py-2.5 text-xs font-medium text-[#707070] transition hover:bg-[#f4f3f6] sm:w-auto"
                   >
                     Batal
@@ -2498,17 +3568,11 @@ const Nota = () => {
                     type="submit"
                     disabled={
                       loadingSuratJalan ||
-                      (
-                        editingId === null &&
-                        selectedItemIds.length === 0
-                      )
+                      selectedItemIds.length === 0
                     }
                     className={`flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-xs font-medium text-white transition sm:w-auto ${
                       loadingSuratJalan ||
-                      (
-                        editingId === null &&
-                        selectedItemIds.length === 0
-                      )
+                      selectedItemIds.length === 0
                         ? 'cursor-not-allowed bg-[#aaa5c1]'
                         : 'bg-[#51448C] hover:bg-[#433878]'
                     }`}
@@ -2520,7 +3584,712 @@ const Nota = () => {
                       className="mr-2 h-4 w-4 object-contain"
                     />
 
-                    Simpan Data
+                    {editingId !== null
+                      ? 'Update Data'
+                      : 'Simpan Data'}
+
+                  </button>
+
+                </div>
+
+              </form>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ==================================================
+          MODAL PRATINJAU NOTA
+      ================================================== */}
+      {isPreviewOpen && (
+        <div
+          className={`fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2 backdrop-blur-[2px] sm:p-4 ${
+            isPreviewClosing
+              ? 'modal-backdrop-closing'
+              : ''
+          }`}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closePreview()
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-nota-title"
+            className={`flex max-h-[96vh] w-full max-w-[980px] flex-col overflow-hidden rounded-2xl bg-[#f3f3f5] shadow-[0_20px_70px_rgba(0,0,0,0.30)] ${
+              isPreviewClosing
+                ? 'modal-panel-closing'
+                : ''
+            }`}
+          >
+            {/* HEADER */}
+            <div className="shrink-0 border-b border-[#dedde5] bg-white px-4 py-3.5 sm:px-6">
+              <div className="flex items-center justify-between gap-3">
+
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#51448C] shadow-sm">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 2.75h9l4 4V21.25H6A2.25 2.25 0 0 1 3.75 19V5A2.25 2.25 0 0 1 6 2.75Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14 2.75v4h5"
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="min-w-0">
+                    <h2
+                      id="preview-nota-title"
+                      className="truncate text-base font-bold text-[#51448C] sm:text-xl"
+                    >
+                      PRATINJAU NOTA TAGIHAN
+                    </h2>
+
+                    <p className="mt-0.5 truncate text-[10px] text-[#8a8791] sm:text-xs">
+                      {previewInvoice?.noNota || 'Nota Tagihan'}
+                      {previewInvoice?.customer
+                        ? ` • ${previewInvoice.customer}`
+                        : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  {/* PRINT ULANG - DI UJUNG KANAN */}
+                  <button
+                    type="button"
+                    onClick={handlePrintUlang}
+                    disabled={previewLoading || printLoading}
+                    className={`inline-flex items-center rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition ${
+                      previewLoading || printLoading
+                        ? 'cursor-not-allowed bg-[#aaa5c1]'
+                        : 'bg-[#51448C] hover:bg-[#433878]'
+                    }`}
+                  >
+                    {printLoading ? (
+                      <>
+                        <span className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Mengirim...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="mr-1.5 h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 14h12v7H6z"
+                          />
+                        </svg>
+                        Print Ulang
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closePreview}
+                    disabled={printLoading}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-xl leading-none text-[#51448C] transition hover:bg-[#eeebf7] hover:text-[#33295f] disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Tutup pratinjau"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* CONTENT */}
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[#e9e9ec] p-3 sm:p-5">
+              {previewLoading ? (
+                <div className="flex min-h-[500px] items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <span className="mb-3 h-9 w-9 animate-spin rounded-full border-4 border-[#51448C]/20 border-t-[#51448C]" />
+                    <span className="text-xs font-medium text-[#51448C]">
+                      Memuat pratinjau nota...
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto w-full max-w-[900px] overflow-hidden rounded-xl bg-white shadow-[0_5px_25px_rgba(0,0,0,0.14)]">
+                  <div className="h-1.5 bg-[#51448C]" />
+
+                  <div className="overflow-x-auto p-4 sm:p-7">
+                    <pre className="min-w-max whitespace-pre font-mono text-[10px] leading-[1.55] text-[#222222] sm:text-xs">
+{previewData || 'Data pratinjau nota tidak tersedia.'}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER */}
+            <div className="shrink-0 border-t border-[#dedde5] bg-white px-4 py-3 sm:px-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] text-[#999999] sm:text-xs">
+                  Pastikan isi nota sudah benar sebelum melakukan print ulang.
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closePreview}
+                  disabled={printLoading}
+                  className="shrink-0 rounded-lg border border-[#dedbe6] bg-white px-4 py-2 text-xs font-medium text-[#707070] transition hover:bg-[#f4f3f6] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ==================================================
+          MODAL PEMBAYARAN
+      ================================================== */}
+      {isPaymentOpen && (
+
+        <div
+          className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-2 sm:p-4 ${
+            isPaymentClosing
+              ? 'modal-backdrop-closing'
+              : ''
+          }`}
+        >
+
+          <div
+            role="dialog"
+            aria-modal="true"
+            className={`flex max-h-[94vh] w-full max-w-[1050px] flex-col overflow-hidden rounded-2xl bg-[#f7f7f7] shadow-[0_15px_50px_rgba(0,0,0,0.25)] ${
+              isPaymentClosing
+                ? 'modal-panel-closing'
+                : ''
+            }`}
+          >
+
+            {/* HEADER */}
+            <div className="shrink-0 border-b border-[#e5e3ea] bg-[#f7f7f7] px-4 py-4 sm:px-6">
+
+              <div className="flex items-start justify-between gap-3">
+
+                <div className="flex min-w-0 items-center gap-3">
+
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#51448C]">
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 6v12m-4-3.5c0 1.1 1.8 2 4 2s4-.9 4-2-1.8-2-4-2-4-.9-4-2 1.8-2 4-2 4 .9 4 2"
+                      />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 3v3M12 18v3"
+                      />
+
+                    </svg>
+
+                  </div>
+
+
+                  <div className="min-w-0">
+
+                    <h2 className="text-lg font-bold text-[#51448C] sm:text-2xl">
+                      PEMBAYARAN NOTA TAGIHAN
+                    </h2>
+
+                    <p className="mt-0.5 text-[10px] text-[#707070] sm:text-xs">
+                      Input pembayaran untuk nota tagihan
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={
+                    closePaymentForm
+                  }
+                  disabled={
+                    paymentLoading
+                  }
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-2xl leading-none text-[#51448C] transition hover:bg-[#ebe8f4] hover:text-[#33295f] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ×
+                </button>
+
+              </div>
+
+            </div>
+
+
+            {/* CONTENT */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 scrollbar-thin sm:px-6 sm:py-6">
+
+              <form
+                onSubmit={
+                  handlePaymentSubmit
+                }
+              >
+
+                <div className="rounded-xl border border-[#dedde5] bg-white p-4 shadow-sm sm:p-5">
+
+                  <div className="mb-4">
+
+                    <h3 className="text-sm font-bold text-[#333333] sm:text-base">
+                      Informasi Pembayaran
+                    </h3>
+
+                    <p className="mt-1 text-[10px] text-[#999999] sm:text-xs">
+                      Data nota terisi otomatis berdasarkan nota yang dipilih.
+                    </p>
+
+                  </div>
+
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        No. Nota
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          paymentData.noNota
+                        }
+                        readOnly
+                        className="h-12 w-full rounded-lg border border-[#e3e1e9] bg-[#eeeeee] px-3 text-sm font-semibold text-[#51448C] outline-none"
+                      />
+
+                    </div>
+
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        Tanggal Bayar
+                      </label>
+
+                      <input
+                        type="date"
+                        name="tanggalBayar"
+                        value={
+                          paymentData.tanggalBayar
+                        }
+                        onChange={
+                          handlePaymentChange
+                        }
+                        disabled={
+                          paymentLoading
+                        }
+                        className="h-12 w-full rounded-lg border border-[#e3e1e9] bg-white px-3 text-sm text-[#707070] outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        Total Tagihan
+                      </label>
+
+                      <div className="flex h-12 items-center rounded-lg border border-[#e3e1e9] bg-[#eeeeee] px-3">
+
+                        <span className="text-base font-bold text-[#333333] sm:text-lg">
+                          {formatRupiah(
+                            paymentData.totalTagihan
+                          )}
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        Sisa Tagihan
+                      </label>
+
+                      <div className="flex h-12 items-center rounded-lg border border-[#ddd8f0] bg-[#f1effa] px-3">
+
+                        <span className="text-base font-bold text-[#51448C] sm:text-lg">
+                          {formatRupiah(
+                            paymentData.sisaTagihan
+                          )}
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        Opsi Pembayaran
+                      </label>
+
+                      <select
+                        name="status"
+                        value={
+                          paymentData.status
+                        }
+                        onChange={
+                          handlePaymentChange
+                        }
+                        disabled={
+                          paymentLoading
+                        }
+                        className="h-12 w-full rounded-lg border border-[#e3e1e9] bg-white px-3 text-sm text-[#333333] outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
+                      >
+
+                        <option value="normal">
+                          Normal / Cicil
+                        </option>
+
+                        <option value="dilunaskan">
+                          Lunas
+                        </option>
+
+                      </select>
+
+                      <p className="mt-1.5 text-[10px] text-[#999999]">
+
+                        {paymentData.status ===
+                        'dilunaskan'
+                          ? 'Jumlah pembayaran otomatis mengikuti seluruh sisa tagihan.'
+                          : 'Masukkan nominal pembayaran yang akan dicicil.'}
+
+                      </p>
+
+                    </div>
+
+
+                    <div>
+
+                      <label className="mb-1.5 block text-xs font-semibold text-[#333333]">
+                        Jumlah Bayar
+                      </label>
+
+                      <div className="relative">
+
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#707070]">
+                          Rp
+                        </span>
+
+                        <input
+                          type="number"
+                          name="jumlahBayar"
+                          value={
+                            paymentData.jumlahBayar
+                          }
+                          onChange={
+                            handlePaymentChange
+                          }
+                          min="0"
+                          max={
+                            paymentData.sisaTagihan
+                          }
+                          readOnly={
+                            paymentData.status ===
+                            'dilunaskan'
+                          }
+                          disabled={
+                            paymentLoading
+                          }
+                          placeholder="Masukkan jumlah pembayaran"
+                          className={`h-12 w-full rounded-lg border border-[#e3e1e9] pl-10 pr-3 text-sm font-semibold outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10 ${
+                            paymentData.status ===
+                            'dilunaskan'
+                              ? 'bg-[#eeeeee] text-[#51448C]'
+                              : 'bg-white text-[#333333]'
+                          }`}
+                        />
+
+                      </div>
+
+                      <p className="mt-1.5 text-[10px] text-[#999999]">
+
+                        Maksimal pembayaran:{' '}
+
+                        <span className="font-semibold text-[#51448C]">
+
+                          {formatRupiah(
+                            paymentData.sisaTagihan
+                          )}
+
+                        </span>
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* RIWAYAT */}
+                <div className="mt-5 rounded-xl border border-[#dedde5] bg-white shadow-sm">
+
+                  <div className="border-b border-[#eeeeee] px-4 py-4 sm:px-5">
+
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+
+                      <div>
+
+                        <h3 className="text-sm font-bold text-[#333333] sm:text-base">
+                          Riwayat Pembayaran
+                        </h3>
+
+                        <p className="mt-1 text-[10px] text-[#999999] sm:text-xs">
+                          Riwayat pembayaran nota akan ditampilkan di sini.
+                        </p>
+
+                      </div>
+
+                      <span className="w-fit rounded-full bg-[#f1effa] px-3 py-1 text-[10px] font-medium text-[#51448C]">
+                        Belum tersedia
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="w-full overflow-x-auto">
+
+                    <div className="max-h-[260px] min-w-[650px] overflow-y-auto scrollbar-thin">
+
+                      <table className="w-full text-left text-xs">
+
+                        <thead className="sticky top-0 z-10 bg-[#faf9fd] text-[#51448C]">
+
+                          <tr className="border-b border-[#dedde5]">
+
+                            <th className="px-4 py-3 font-semibold">
+                              No.
+                            </th>
+
+                            <th className="px-4 py-3 font-semibold">
+                              Tanggal Bayar
+                            </th>
+
+                            <th className="px-4 py-3 font-semibold">
+                              Status
+                            </th>
+
+                            <th className="px-4 py-3 text-right font-semibold">
+                              Jumlah Bayar
+                            </th>
+
+                            <th className="px-4 py-3 text-center font-semibold">
+                              Aksi
+                            </th>
+
+                          </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                          <tr>
+
+                            <td
+                              colSpan={5}
+                              className="h-[170px] px-4 py-6 text-center"
+                            >
+
+                              <div className="flex flex-col items-center justify-center">
+
+                                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f1effa]">
+
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 text-[#51448C]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={1.5}
+                                  >
+
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M9 5h6M9 9h6M9 13h3m-7 8h10a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2Z"
+                                    />
+
+                                  </svg>
+
+                                </div>
+
+                                <span className="text-xs font-medium text-[#8f899d]">
+                                  Belum ada riwayat pembayaran
+                                </span>
+
+                                <span className="mt-1 text-[10px] text-[#b0abb8]">
+                                  Data pembayaran akan muncul setelah API riwayat tersedia.
+                                </span>
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        </tbody>
+
+                      </table>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* INFO */}
+                <div className="mt-4 rounded-lg border border-[#ddd8f0] bg-[#f5f3fb] px-4 py-3">
+
+                  <div className="flex items-start gap-2">
+
+                    <span className="mt-0.5 text-sm text-[#51448C]">
+                      ℹ
+                    </span>
+
+                    <div className="text-[10px] leading-relaxed text-[#707070] sm:text-xs">
+
+                      <p className="font-semibold text-[#51448C]">
+                        Informasi Pembayaran
+                      </p>
+
+                      <p className="mt-1">
+                        Pilih <strong>Normal / Cicil</strong> jika hanya membayar sebagian tagihan.
+                        Pilih <strong>Lunas</strong> jika ingin melunasi seluruh sisa tagihan.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* FOOTER */}
+                <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[#e5e3ea] pt-4 sm:flex-row sm:items-center sm:justify-between">
+
+                  <button
+                    type="button"
+                    onClick={
+                      closePaymentForm
+                    }
+                    disabled={
+                      paymentLoading
+                    }
+                    className="w-full rounded-lg border border-[#dedbe6] bg-white px-5 py-3 text-xs font-medium text-[#707070] transition hover:bg-[#f4f3f6] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  >
+                    Batal
+                  </button>
+
+
+                  <button
+                    type="submit"
+                    disabled={
+                      paymentLoading ||
+                      !paymentData.tanggalBayar ||
+                      Number(
+                        paymentData.jumlahBayar || 0
+                      ) <= 0
+                    }
+                    className={`flex w-full items-center justify-center rounded-lg px-6 py-3 text-xs font-medium text-white transition sm:w-auto ${
+                      paymentLoading ||
+                      !paymentData.tanggalBayar ||
+                      Number(
+                        paymentData.jumlahBayar || 0
+                      ) <= 0
+                        ? 'cursor-not-allowed bg-[#aaa5c1]'
+                        : 'bg-[#51448C] hover:bg-[#433878]'
+                    }`}
+                  >
+
+                    {paymentLoading ? (
+
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Menyimpan...
+                      </>
+
+                    ) : (
+
+                      <>
+                        <img
+                          src={saveIcon}
+                          alt=""
+                          className="mr-2 h-4 w-4 object-contain"
+                        />
+
+                        Simpan Pembayaran
+                      </>
+
+                    )}
 
                   </button>
 
