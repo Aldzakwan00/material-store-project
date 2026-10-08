@@ -3000,24 +3000,7 @@ const handleDeletePayment = async (payment) => {
                     className="inline-flex items-center whitespace-nowrap rounded-md bg-[#d9534f] px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-[#c9302c]"
                   >
 
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="mr-1.5 h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 7h12M9 7V4h6v3m-8 0 .75 13h6.5L15 7M10 11v5M14 11v5"
-                      />
-
-                    </svg>
-
-                    Delete
+                    hapus
 
                   </button>
 

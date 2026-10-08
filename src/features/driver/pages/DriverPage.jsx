@@ -1228,7 +1228,7 @@ const DriverPage = () => {
                       hover:bg-red-600
                     "
                   >
-                    Delete
+                    Hapus
                   </button>
                 </div>
               )}
