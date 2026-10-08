@@ -25,32 +25,25 @@ const MaterialPage = () => {
     // =====================================================
     const [materials, setMaterials] = useState([])
     const [defaultMaterials, setDefaultMaterials] = useState([])
-
     const [isLoading, setIsLoading] = useState(true)
 
     // =====================================================
     // CUSTOMER STATE
     // =====================================================
     const [customers, setCustomers] = useState([])
-
     const [selectedCustomer, setSelectedCustomer] = useState(null)
-
     const [customerSearch, setCustomerSearch] = useState('')
-
     const [
         isCustomerDropdownOpen,
         setIsCustomerDropdownOpen,
     ] = useState(false)
-
     const [isCustomerLoading, setIsCustomerLoading] = useState(false)
 
     // =====================================================
     // MATERIAL FORM STATE
     // =====================================================
     const [isFormOpen, setIsFormOpen] = useState(false)
-
     const [isFormClosing, setIsFormClosing] = useState(false)
-
     const [editingId, setEditingId] = useState(null)
 
     const [formData, setFormData] = useState({
@@ -63,26 +56,19 @@ const MaterialPage = () => {
     })
 
     const [formError, setFormError] = useState('')
-
     const [formLoading, setFormLoading] = useState(false)
 
     // =====================================================
     // CUSTOMER PRICE MODAL
     // =====================================================
-    const [
-        isPriceModalOpen,
-        setIsPriceModalOpen,
-    ] = useState(false)
-
+    const [isPriceModalOpen, setIsPriceModalOpen] = useState(false)
     const [
         isPriceModalClosing,
         setIsPriceModalClosing,
     ] = useState(false)
 
     const [selectedMaterial, setSelectedMaterial] = useState(null)
-
     const [customerPrice, setCustomerPrice] = useState('')
-
     const [priceLoading, setPriceLoading] = useState(false)
 
     // =====================================================
@@ -242,7 +228,6 @@ const MaterialPage = () => {
             setIsLoading(true)
 
             const response = await getMaterial()
-
             const items = response?.items || []
 
             const mappedMaterials =
@@ -279,7 +264,6 @@ const MaterialPage = () => {
     const fetchCustomers = async () => {
         try {
             const response = await getCustomers()
-
             const items = response?.items || []
 
             setCustomers(items)
@@ -374,9 +358,7 @@ const MaterialPage = () => {
     ) => {
         try {
             setIsCustomerDropdownOpen(false)
-
             setIsCustomerLoading(true)
-
             setSelectedCustomer(customer)
 
             setCustomerSearch(
@@ -419,9 +401,7 @@ const MaterialPage = () => {
     // =====================================================
     const handleClearCustomer = async () => {
         setSelectedCustomer(null)
-
         setCustomerSearch('')
-
         setIsCustomerDropdownOpen(false)
 
         if (defaultMaterials.length > 0) {
@@ -507,9 +487,7 @@ const MaterialPage = () => {
         })
 
         setFormError('')
-
         setIsFormClosing(false)
-
         setIsFormOpen(true)
     }
 
@@ -546,9 +524,7 @@ const MaterialPage = () => {
 
         window.setTimeout(() => {
             setIsFormOpen(false)
-
             setIsFormClosing(false)
-
             setEditingId(null)
 
             setFormData({
@@ -573,7 +549,6 @@ const MaterialPage = () => {
         setFormData({
             code:
                 generateNextCode(),
-
             name: '',
             unit: '',
             buyPrice: '',
@@ -582,9 +557,7 @@ const MaterialPage = () => {
         })
 
         setFormError('')
-
         setIsFormClosing(false)
-
         setIsFormOpen(true)
     }
 
@@ -627,7 +600,6 @@ const MaterialPage = () => {
 
         try {
             setFormError('')
-
             setFormLoading(true)
 
             const materialData = {
@@ -654,9 +626,6 @@ const MaterialPage = () => {
                     formData.specialPrice,
             }
 
-            // =================================================
-            // UPDATE MATERIAL DEFAULT
-            // =================================================
             if (
                 editingId !== null
             ) {
@@ -680,9 +649,6 @@ const MaterialPage = () => {
                 return
             }
 
-            // =================================================
-            // CREATE MATERIAL DEFAULT
-            // =================================================
             await createMaterial(
                 materialData
             )
@@ -1211,7 +1177,7 @@ const MaterialPage = () => {
                         undefined
                 ) {
                     return (
-                        <div>
+                        <div className="min-w-[110px]">
                             <span className="font-medium text-gray-500">
                                 Rp{' '}
                                 {formatPrice(
@@ -1257,7 +1223,7 @@ const MaterialPage = () => {
                     !selectedCustomer
                 ) {
                     return (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">
                             <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
 
                             Default
@@ -1279,7 +1245,7 @@ const MaterialPage = () => {
 
                 if (isChanged) {
                     return (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
                             <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
 
                             Sudah Diubah
@@ -1288,7 +1254,7 @@ const MaterialPage = () => {
                 }
 
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-600">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
 
                         Default
@@ -1302,12 +1268,26 @@ const MaterialPage = () => {
     // RETURN
     // =====================================================
     return (
-        <main className="min-h-screen bg-white px-4 py-6 sm:px-6 sm:py-8 lg:ml-64 lg:px-8 lg:py-10">
-
+        <main
+            className="
+                min-h-screen
+                w-full
+                min-w-0
+                overflow-x-hidden
+                bg-white
+                px-3 py-5
+                sm:px-5 sm:py-6
+                md:px-6
+                lg:ml-64
+                lg:w-[calc(100%-16rem)]
+                lg:px-8 lg:py-8
+                xl:px-10
+            "
+        >
             {/* =================================================
                 HEADER
             ================================================= */}
-            <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
+            <div className="mb-5 flex min-w-0 items-center gap-2 sm:mb-6 sm:gap-3">
                 <span
                     aria-hidden="true"
                     className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-9 sm:w-9"
@@ -1316,7 +1296,6 @@ const MaterialPage = () => {
                         maskPosition: 'center',
                         maskRepeat: 'no-repeat',
                         maskSize: 'contain',
-
                         WebkitMaskImage: `url(${materialIcon})`,
                         WebkitMaskPosition: 'center',
                         WebkitMaskRepeat: 'no-repeat',
@@ -1324,7 +1303,7 @@ const MaterialPage = () => {
                     }}
                 />
 
-                <h1 className="text-xl font-bold text-[#51448C] sm:text-2xl lg:text-3xl">
+                <h1 className="truncate text-xl font-bold text-[#51448C] sm:text-2xl lg:text-3xl">
                     DATA MATERIAL
                 </h1>
             </div>
@@ -1332,23 +1311,17 @@ const MaterialPage = () => {
             {/* =================================================
                 TABLE CONTAINER
             ================================================= */}
-            <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
-
+            <section className="w-full min-w-0 overflow-hidden rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
                 {/* =================================================
                     TOP TOOLBAR
                 ================================================= */}
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
+                <div className="mb-4 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     {/* TAMBAH DATA */}
                     <button
                         type="button"
-                        onClick={
-                            handleAdd
-                        }
-                        disabled={
-                            isLoading
-                        }
-                        className="inline-flex w-fit items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                        onClick={handleAdd}
+                        disabled={isLoading}
+                        className="inline-flex w-fit shrink-0 items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-xs font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
                     >
                         <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#51448C] text-xs font-bold text-white">
                             +
@@ -1358,16 +1331,15 @@ const MaterialPage = () => {
                     </button>
 
                     {/* SEARCH CUSTOMER */}
-                    <div className="relative w-full sm:w-[330px]">
-
+                    <div className="relative w-full min-w-0 sm:w-[330px] sm:max-w-full">
                         <div
-                            className={`flex h-10 items-center rounded-lg border bg-white transition ${
+                            className={`flex h-10 min-w-0 items-center rounded-lg border bg-white transition ${
                                 isCustomerDropdownOpen
                                     ? 'border-[#51448C] ring-2 ring-[#51448C]/10'
                                     : 'border-[#d9d9df]'
                             }`}
                         >
-                            <span className="pl-3 text-gray-400">
+                            <span className="shrink-0 pl-3 text-gray-400">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="17"
@@ -1417,7 +1389,7 @@ const MaterialPage = () => {
                             />
 
                             {isCustomerLoading && (
-                                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-[#51448C]" />
+                                <span className="mr-2 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gray-200 border-t-[#51448C]" />
                             )}
 
                             {selectedCustomer &&
@@ -1427,7 +1399,7 @@ const MaterialPage = () => {
                                         onClick={
                                             handleClearCustomer
                                         }
-                                        className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                                        className="mr-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
                                         title="Tampilkan semua material"
                                     >
                                         ×
@@ -1437,10 +1409,8 @@ const MaterialPage = () => {
 
                         {/* CUSTOMER DROPDOWN */}
                         {isCustomerDropdownOpen && (
-                            <div className="absolute left-0 right-0 top-[44px] z-40 overflow-hidden rounded-lg border border-[#dedee5] bg-white shadow-[0_8px_25px_rgba(0,0,0,0.12)]">
-
+                            <div className="absolute left-0 right-0 top-[44px] z-[70] w-full overflow-hidden rounded-lg border border-[#dedee5] bg-white shadow-[0_8px_25px_rgba(0,0,0,0.12)]">
                                 <div className="max-h-[260px] overflow-y-auto">
-
                                     {filteredCustomers.length ===
                                     0 ? (
                                         <div className="px-4 py-5 text-center text-xs text-gray-500">
@@ -1462,7 +1432,7 @@ const MaterialPage = () => {
                                                             customer
                                                         )
                                                     }
-                                                    className="flex w-full items-center gap-3 border-b border-gray-50 px-3 py-2.5 text-left transition last:border-0 hover:bg-[#f7f5ff]"
+                                                    className="flex w-full min-w-0 items-center gap-3 border-b border-gray-50 px-3 py-2.5 text-left transition last:border-0 hover:bg-[#f7f5ff]"
                                                 >
                                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eeeafd] text-xs font-bold text-[#51448C]">
                                                         {customer.nama_customer
@@ -1480,7 +1450,7 @@ const MaterialPage = () => {
                                                             }
                                                         </p>
 
-                                                        <p className="text-[10px] text-gray-400">
+                                                        <p className="truncate text-[10px] text-gray-400">
                                                             {
                                                                 customer.kode
                                                             }
@@ -1489,7 +1459,7 @@ const MaterialPage = () => {
 
                                                     {selectedCustomer?.id ===
                                                         customer.id && (
-                                                        <span className="text-[#51448C]">
+                                                        <span className="shrink-0 text-[#51448C]">
                                                             ✓
                                                         </span>
                                                     )}
@@ -1507,9 +1477,9 @@ const MaterialPage = () => {
                     ACTIVE CUSTOMER
                 ================================================= */}
                 {selectedCustomer && (
-                    <div className="mb-4 flex flex-col gap-2 rounded-lg border border-[#ddd8f4] bg-[#f8f6ff] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#51448C] text-[10px] font-bold text-white">
+                    <div className="mb-4 flex min-w-0 flex-col gap-2 rounded-lg border border-[#ddd8f4] bg-[#f8f6ff] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#51448C] text-[10px] font-bold text-white">
                                 {selectedCustomer.nama_customer
                                     ?.charAt(
                                         0
@@ -1517,13 +1487,12 @@ const MaterialPage = () => {
                                     ?.toUpperCase()}
                             </div>
 
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[10px] text-gray-500">
-                                    Harga untuk
-                                    customer
+                                    Harga untuk customer
                                 </p>
 
-                                <p className="text-xs font-bold text-[#51448C]">
+                                <p className="truncate text-xs font-bold text-[#51448C]">
                                     {
                                         selectedCustomer.nama_customer
                                     }
@@ -1536,10 +1505,9 @@ const MaterialPage = () => {
                             onClick={
                                 handleClearCustomer
                             }
-                            className="w-fit text-[10px] font-medium text-[#51448C] hover:underline"
+                            className="w-fit shrink-0 text-[10px] font-medium text-[#51448C] hover:underline"
                         >
-                            Tampilkan semua
-                            material
+                            Tampilkan semua material
                         </button>
                     </div>
                 )}
@@ -1547,8 +1515,7 @@ const MaterialPage = () => {
                 {/* =================================================
                     TABLE
                 ================================================= */}
-                <div className="custom-scrollbar w-full overflow-auto rounded-lg">
-
+                <div className="w-full min-w-0 overflow-hidden rounded-lg">
                     {isLoading ||
                     isCustomerLoading ? (
                         <div className="py-10 text-center text-sm text-gray-500">
@@ -1563,117 +1530,113 @@ const MaterialPage = () => {
                     ) : materials.length ===
                       0 ? (
                         <div className="py-10 text-center text-sm text-gray-500">
-                            Belum ada data
-                            material.
+                            Belum ada data material.
                         </div>
                     ) : (
-                        <DataTable
-                            columns={
-                                columns
-                            }
-                            data={
-                                materials
-                            }
-                            actionLabel="Action"
-                            tableClassName="text-xs sm:text-sm min-w-[1250px]"
-                            actions={(
-                                row
-                            ) => {
-                                const isCustomerPriceChanged =
-                                    selectedCustomer &&
-                                    row.customerPrice !==
-                                        null &&
-                                    row.customerPrice !==
-                                        undefined &&
-                                    Number(
-                                        row.customerPrice
-                                    ) !==
+                        <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden">
+                            <DataTable
+                                columns={columns}
+                                data={materials}
+                                actionLabel="Action"
+                                tableClassName="text-xs sm:text-sm min-w-[1250px]"
+                                actions={(
+                                    row
+                                ) => {
+                                    const isCustomerPriceChanged =
+                                        selectedCustomer &&
+                                        row.customerPrice !==
+                                            null &&
+                                        row.customerPrice !==
+                                            undefined &&
                                         Number(
-                                            row.defaultPrice
-                                        )
+                                            row.customerPrice
+                                        ) !==
+                                            Number(
+                                                row.defaultPrice
+                                            )
 
-                                return (
-                                    <div className="flex items-center gap-2">
-
-                                        {/* EDIT DEFAULT MATERIAL */}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleEdit(
-                                                    row.id
-                                                )
-                                            }
-                                            className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
-                                        >
-                                            <img
-                                                src={
-                                                    editIcon
-                                                }
-                                                alt=""
-                                                className="mr-2 h-3.5 w-3.5 object-contain"
-                                            />
-
-                                            Edit
-                                        </button>
-
-                                        {/* EDIT CUSTOMER PRICE */}
-                                        {selectedCustomer && (
+                                    return (
+                                        <div className="flex min-w-max items-center gap-2">
+                                            {/* EDIT DEFAULT MATERIAL */}
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    handleEditCustomerPrice(
-                                                        row
+                                                    handleEdit(
+                                                        row.id
                                                     )
                                                 }
-                                                disabled={
-                                                    resetPriceLoading
-                                                }
-                                                className="whitespace-nowrap rounded-md border border-[#51448C] bg-white px-2 py-1 text-xs font-medium text-[#51448C] transition hover:bg-[#f2efff] disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="flex shrink-0 items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
                                             >
-                                                Harga Customer
-                                            </button>
-                                        )}
+                                                <img
+                                                    src={
+                                                        editIcon
+                                                    }
+                                                    alt=""
+                                                    className="mr-2 h-3.5 w-3.5 object-contain"
+                                                />
 
-                                        {/* RESET CUSTOMER PRICE */}
-                                        {selectedCustomer &&
-                                            isCustomerPriceChanged && (
+                                                Edit
+                                            </button>
+
+                                            {/* EDIT CUSTOMER PRICE */}
+                                            {selectedCustomer && (
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        handleDeleteCustomerPrice(
+                                                        handleEditCustomerPrice(
                                                             row
                                                         )
                                                     }
                                                     disabled={
                                                         resetPriceLoading
                                                     }
-                                                    className="whitespace-nowrap rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="shrink-0 whitespace-nowrap rounded-md border border-[#51448C] bg-white px-2 py-1 text-xs font-medium text-[#51448C] transition hover:bg-[#f2efff] disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
-                                                    {resetPriceLoading
-                                                        ? 'Mereset...'
-                                                        : 'Reset Harga'}
+                                                    Harga Customer
                                                 </button>
                                             )}
 
-                                        {/* DELETE MATERIAL */}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleDelete(
-                                                    row.id
-                                                )
-                                            }
-                                            disabled={
-                                                deleteLoading
-                                            }
-                                            className="whitespace-nowrap rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            Hapus
-                                        </button>
-                                    </div>
-                                )
-                            }}
-                        />
+                                            {/* RESET CUSTOMER PRICE */}
+                                            {selectedCustomer &&
+                                                isCustomerPriceChanged && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleDeleteCustomerPrice(
+                                                                row
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            resetPriceLoading
+                                                        }
+                                                        className="shrink-0 whitespace-nowrap rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {resetPriceLoading
+                                                            ? 'Mereset...'
+                                                            : 'Reset Harga'}
+                                                    </button>
+                                                )}
+
+                                            {/* DELETE MATERIAL */}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        row.id
+                                                    )
+                                                }
+                                                disabled={
+                                                    deleteLoading
+                                                }
+                                                className="shrink-0 whitespace-nowrap rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    )
+                                }}
+                            />
+                        </div>
                     )}
                 </div>
             </section>
@@ -1683,7 +1646,7 @@ const MaterialPage = () => {
             ===================================================== */}
             {isFormOpen && (
                 <div
-                    className={`modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/10 px-4 ${
+                    className={`fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/20 px-3 py-4 sm:items-center sm:px-5 sm:py-6 ${
                         isFormClosing
                             ? 'modal-backdrop-closing'
                             : ''
@@ -1693,7 +1656,7 @@ const MaterialPage = () => {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="material-form-title"
-                        className={`modal-panel w-full max-w-[480px] rounded-xl bg-[#f7f7f7] px-5 py-5 shadow-[0_5px_18px_rgba(0,0,0,0.18)] ${
+                        className={`my-auto max-h-[calc(100vh-2rem)] w-full max-w-[480px] overflow-y-auto rounded-xl bg-[#f7f7f7] px-4 py-5 shadow-[0_5px_18px_rgba(0,0,0,0.18)] sm:max-h-[calc(100vh-3rem)] sm:px-5 ${
                             isFormClosing
                                 ? 'modal-panel-closing'
                                 : ''
@@ -1713,7 +1676,6 @@ const MaterialPage = () => {
                                             'no-repeat',
                                         maskSize:
                                             'contain',
-
                                         WebkitMaskImage: `url(${materialIcon})`,
                                         WebkitMaskPosition:
                                             'center',
@@ -1726,7 +1688,7 @@ const MaterialPage = () => {
 
                                 <h2
                                     id="material-form-title"
-                                    className="text-[15px] font-bold leading-tight text-[#51448C]"
+                                    className="text-[14px] font-bold leading-tight text-[#51448C] sm:text-[15px]"
                                 >
                                     INPUT &amp; EDIT
                                     DATA MATERIAL
@@ -1749,8 +1711,7 @@ const MaterialPage = () => {
                         </div>
 
                         <p className="mb-3 text-[9px] text-black">
-                            Silahkan masukkan
-                            data material
+                            Silahkan masukkan data material
                         </p>
 
                         {/* FORM */}
@@ -1778,7 +1739,7 @@ const MaterialPage = () => {
                             />
 
                             {/* NAMA + SATUAN */}
-                            <div className="mb-2.5 grid grid-cols-[1fr_64px] gap-2">
+                            <div className="mb-2.5 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_80px]">
                                 <div>
                                     <label
                                         htmlFor="material-name"
@@ -1844,7 +1805,7 @@ const MaterialPage = () => {
                             </div>
 
                             {/* HARGA */}
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 <div>
                                     <label
                                         htmlFor="material-buy-price"
@@ -1896,7 +1857,7 @@ const MaterialPage = () => {
 
                             {/* ERROR */}
                             {formError && (
-                                <p className="mt-1.5 text-[9px] text-red-500">
+                                <p className="mt-1.5 break-words text-[9px] text-red-500">
                                     <span
                                         aria-hidden="true"
                                         className="mr-1"
@@ -1904,9 +1865,7 @@ const MaterialPage = () => {
                                         ⚠
                                     </span>
 
-                                    {
-                                        formError
-                                    }
+                                    {formError}
                                 </p>
                             )}
 
@@ -1940,22 +1899,22 @@ const MaterialPage = () => {
             ===================================================== */}
             {isPriceModalOpen && (
                 <div
-                    className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/20 px-4 transition-opacity ${
+                    className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/20 px-3 py-4 sm:items-center sm:px-5 sm:py-6 transition-opacity ${
                         isPriceModalClosing
                             ? 'opacity-0'
                             : 'opacity-100'
                     }`}
                 >
                     <div
-                        className={`w-full max-w-[420px] rounded-2xl bg-white p-5 shadow-[0_10px_35px_rgba(0,0,0,0.18)] transition-all ${
+                        className={`my-auto max-h-[calc(100vh-2rem)] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_10px_35px_rgba(0,0,0,0.18)] transition-all sm:max-h-[calc(100vh-3rem)] sm:p-5 ${
                             isPriceModalClosing
                                 ? 'translate-y-4 scale-[0.98] opacity-0'
                                 : 'translate-y-0 scale-100 opacity-100'
                         }`}
                     >
                         {/* HEADER */}
-                        <div className="mb-5 flex items-start justify-between">
-                            <div>
+                        <div className="mb-5 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
                                 <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
                                     Harga Customer
                                 </p>
@@ -1973,7 +1932,7 @@ const MaterialPage = () => {
                                 disabled={
                                     priceLoading
                                 }
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-500 transition hover:bg-gray-200 disabled:opacity-50"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-500 transition hover:bg-gray-200 disabled:opacity-50"
                             >
                                 ×
                             </button>
@@ -1985,7 +1944,7 @@ const MaterialPage = () => {
                                 Customer
                             </p>
 
-                            <p className="mt-0.5 text-sm font-bold text-[#51448C]">
+                            <p className="mt-0.5 break-words text-sm font-bold text-[#51448C]">
                                 {
                                     selectedCustomer?.nama_customer
                                 }
@@ -1999,12 +1958,12 @@ const MaterialPage = () => {
                         </div>
 
                         {/* MATERIAL INFO */}
-                        <div className="mb-4">
+                        <div className="mb-4 min-w-0">
                             <p className="text-[10px] text-gray-400">
                                 Material
                             </p>
 
-                            <p className="text-sm font-semibold text-gray-700">
+                            <p className="break-words text-sm font-semibold text-gray-700">
                                 {
                                     selectedMaterial?.name
                                 }
@@ -2019,12 +1978,12 @@ const MaterialPage = () => {
 
                         {/* DEFAULT PRICE */}
                         <div className="mb-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-3">
                                 <span className="text-xs text-gray-500">
                                     Harga Default
                                 </span>
 
-                                <span className="text-xs font-semibold text-gray-700">
+                                <span className="whitespace-nowrap text-xs font-semibold text-gray-700">
                                     Rp{' '}
                                     {formatPrice(
                                         selectedMaterial?.defaultPrice
@@ -2039,12 +1998,12 @@ const MaterialPage = () => {
                             selectedMaterial?.customerPrice !==
                                 undefined && (
                                 <div className="mb-3 rounded-lg border border-[#ddd8f4] bg-[#f8f6ff] px-3 py-2">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs text-gray-500">
                                             Harga Saat Ini
                                         </span>
 
-                                        <span className="text-xs font-semibold text-[#51448C]">
+                                        <span className="whitespace-nowrap text-xs font-semibold text-[#51448C]">
                                             Rp{' '}
                                             {formatPrice(
                                                 selectedMaterial.customerPrice
@@ -2095,7 +2054,7 @@ const MaterialPage = () => {
                             </div>
 
                             {/* BUTTONS */}
-                            <div className="mt-5 flex justify-end gap-2">
+                            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
                                     onClick={
@@ -2104,7 +2063,7 @@ const MaterialPage = () => {
                                     disabled={
                                         priceLoading
                                     }
-                                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+                                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
                                 >
                                     Batal
                                 </button>
@@ -2114,7 +2073,7 @@ const MaterialPage = () => {
                                     disabled={
                                         priceLoading
                                     }
-                                    className="rounded-lg bg-[#51448C] px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-[#433878] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="w-full rounded-lg bg-[#51448C] px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-[#433878] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                                 >
                                     {priceLoading
                                         ? 'Menyimpan...'

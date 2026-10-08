@@ -8,6 +8,7 @@ import editIcon from '../../../assets/img/icon/EditIcon.png'
 import {
   getNotaTagihan,
   getSuratJalanDariSampai,
+  getNotaTagihanById,
   createNotaTagihanAll,
   createNotaTagihanChecked,
   updateNotaTagihanCicil,
@@ -20,6 +21,7 @@ import {
 import {
   bayarCicil,
   bayarLunas,
+  deletePembayaran,
 } from '../../../services/PembayaranNota'
 
 import { getCustomers } from '../../../services/CustomerServices'
@@ -133,6 +135,7 @@ const SearchableDropdown = ({
   loading,
   disabled = false,
   showLabel = true,
+  selectedLabel = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
@@ -144,6 +147,11 @@ const SearchableDropdown = ({
     (option) =>
       String(option.id) === String(value)
   )
+
+  const displayLabel =
+    selectedOption?.name ||
+    selectedLabel ||
+    ''
 
   const filteredOptions = options.filter((option) =>
     String(option.name || '')
@@ -234,8 +242,8 @@ const SearchableDropdown = ({
         >
           {loading
             ? `Memuat ${label.toLowerCase()}...`
-            : selectedOption
-              ? selectedOption.name
+            : displayLabel
+              ? displayLabel
               : placeholder}
         </span>
 
@@ -478,6 +486,15 @@ const Nota = () => {
     useState(false)
 
   // ======================================================
+  // DETAIL + RIWAYAT PEMBAYARAN
+  // ======================================================
+  const [paymentHistory, setPaymentHistory] =
+    useState([])
+
+  const [paymentDetailLoading, setPaymentDetailLoading] =
+    useState(false)
+
+  // ======================================================
   // PRATINJAU + PRINT ULANG
   // ======================================================
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -697,6 +714,8 @@ const Nota = () => {
         formattedDrivers
       )
 
+      return formattedDrivers
+
     } catch (error) {
 
       Swal.fire({
@@ -726,15 +745,11 @@ const Nota = () => {
 
 
   // ======================================================
-  // LOAD DRIVER KETIKA MODAL TERBUKA
+  // LOAD DRIVER
   // ======================================================
   useEffect(() => {
-
-    if (!isFormOpen) return
-
     fetchDrivers()
-
-  }, [isFormOpen])
+  }, [])
 
 
   // ======================================================
@@ -843,6 +858,7 @@ const Nota = () => {
     tanggalDari,
     tanggalSampai,
     preserveSelectedIds = [],
+    isEditMode = false,
   }) => {
 
     if (
@@ -851,123 +867,81 @@ const Nota = () => {
       !tanggalDari ||
       !tanggalSampai
     ) {
-
       setSuratJalanItems([])
       setSelectedItemIds([])
       setTotalTagihan(0)
       setSuratJalanSearched(false)
-
       return
-
     }
 
-
-    if (
-      tanggalDari >
-      tanggalSampai
-    ) {
-
+    if (tanggalDari > tanggalSampai) {
       setSuratJalanItems([])
       setSelectedItemIds([])
       setTotalTagihan(0)
       setSuratJalanSearched(false)
-
       return
-
     }
-
 
     try {
-
       setLoadingSuratJalan(true)
       setSuratJalanSearched(false)
 
-      const response =
-        await getSuratJalanDariSampai(
-          Number(customerId),
-          Number(driverId),
-          tanggalDari,
-          tanggalSampai
-        )
+      const response = await getSuratJalanDariSampai(
+        Number(customerId),
+        Number(driverId),
+        tanggalDari,
+        tanggalSampai
+      )
 
-      const items =
-        Array.isArray(response?.items)
-          ? response.items
-          : []
-
+      const items = Array.isArray(response?.items)
+        ? response.items
+        : []
 
       setSuratJalanItems(items)
 
-
-      setTotalTagihan(
-        Number(
-          response?.total_tagihan || 0
-        )
+      const responseTotal = Number(
+        response?.total_tagihan || 0
       )
 
+      setTotalTagihan(responseTotal)
 
-      const normalizedPreservedIds =
-        normalizeIds(
-          preserveSelectedIds
-        )
+      const preservedIds = normalizeIds(
+        preserveSelectedIds
+      )
 
+      if (isEditMode) {
+        // Saat edit, jangan pernah memilih semua item.
+        // Hanya item yang memang sudah tersimpan di nota yang dipilih.
+        const availableSelectedIds = items
+          .map((item) => getSuratJalanItemId(item))
+          .filter(
+            (itemId) =>
+              itemId !== null &&
+              itemId !== undefined &&
+              preservedIds.includes(Number(itemId))
+          )
+          .map((itemId) => Number(itemId))
 
-      // ==================================================
-      // EDIT:
-      // HANYA ITEM YANG SEBELUMNYA MASUK NOTA YANG DICENTANG
-      // ==================================================
-      if (
-        normalizedPreservedIds.length > 0
-      ) {
-
-        const availableSelectedIds =
-          items
-            .map((item) =>
-              getSuratJalanItemId(item)
-            )
-            .filter(
-              (itemId) =>
-                itemId !== null &&
-                normalizedPreservedIds.includes(
-                  Number(itemId)
-                )
-            )
-            .map((itemId) =>
-              Number(itemId)
-            )
-
-        setSelectedItemIds(
+        setSelectedItemIds(availableSelectedIds)
+        editSelectedItemIdsRef.current =
           availableSelectedIds
-        )
-
       } else {
+        // Saat tambah, semua kandidat dipilih otomatis.
+        const allIds = items
+          .map((item) => getSuratJalanItemId(item))
+          .filter(
+            (itemId) =>
+              itemId !== null &&
+              itemId !== undefined
+          )
+          .map((itemId) => Number(itemId))
 
-        // ==================================================
-        // ADD:
-        // SEMUA ITEM OTOMATIS TERPILIH
-        // ==================================================
-        setSelectedItemIds(
-          items
-            .map((item) =>
-              getSuratJalanItemId(item)
-            )
-            .filter(
-              (itemId) =>
-                itemId !== null &&
-                itemId !== undefined
-            )
-            .map((itemId) =>
-              Number(itemId)
-            )
-        )
-
+        setSelectedItemIds(allIds)
       }
-
 
       setSuratJalanSearched(true)
 
     } catch (error) {
-
       setSuratJalanItems([])
       setSelectedItemIds([])
       setTotalTagihan(0)
@@ -981,42 +955,27 @@ const Nota = () => {
           'Data surat jalan gagal diambil.',
         confirmButtonColor: '#51448C',
       })
-
     } finally {
-
       setLoadingSuratJalan(false)
-
     }
-
   }
-
 
   // ======================================================
   // FETCH SURAT JALAN
   // ======================================================
   const fetchSuratJalan = async () => {
-
     await fetchSuratJalanByFilter({
-      customerId:
-        formData.customer_id,
-
-      driverId:
-        formData.driver_id,
-
-      tanggalDari:
-        formData.tanggal_kirim_dari,
-
-      tanggalSampai:
-        formData.tanggal_kirim_sampai,
-
+      customerId: formData.customer_id,
+      driverId: formData.driver_id,
+      tanggalDari: formData.tanggal_kirim_dari,
+      tanggalSampai: formData.tanggal_kirim_sampai,
       preserveSelectedIds:
         editingId !== null
           ? editSelectedItemIdsRef.current
           : [],
+      isEditMode: editingId !== null,
     })
-
   }
-
 
   // ======================================================
   // AUTO LOAD SURAT JALAN
@@ -1032,11 +991,14 @@ const Nota = () => {
       !formData.tanggal_kirim_dari ||
       !formData.tanggal_kirim_sampai
     ) {
-
-      setSuratJalanItems([])
-      setSelectedItemIds([])
-      setTotalTagihan(0)
-      setSuratJalanSearched(false)
+      // Jangan menghapus data lama ketika modal EDIT baru saja dibuka.
+      // State form masih bisa sedang diisi secara asynchronous.
+      if (editingId === null) {
+        setSuratJalanItems([])
+        setSelectedItemIds([])
+        setTotalTagihan(0)
+        setSuratJalanSearched(false)
+      }
 
       return
 
@@ -1092,9 +1054,17 @@ const Nota = () => {
 
       setSelectedItemIds(ids)
 
+      if (editingId !== null) {
+        editSelectedItemIdsRef.current = ids
+      }
+
     } else {
 
       setSelectedItemIds([])
+
+      if (editingId !== null) {
+        editSelectedItemIdsRef.current = []
+      }
 
     }
 
@@ -1217,87 +1187,108 @@ const Nota = () => {
   // ======================================================
   // EDIT
   // ======================================================
-  const openEditForm = (id) => {
-  const invoice = invoices.find(
-    (item) => Number(item.id) === Number(id)
-  )
+  const openEditForm = async (id) => {
+    const invoice = invoices.find(
+      (item) => Number(item.id) === Number(id)
+    )
 
-  if (!invoice) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Data tidak ditemukan',
-      text: 'Data nota tagihan tidak ditemukan.',
-      confirmButtonColor: '#51448C',
-    })
-    return
-  }
-
-  const existingItems = Array.isArray(invoice.items)
-    ? invoice.items
-    : []
-
-  setEditingId(invoice.id)
-
-  setEditingStatus(
-    String(invoice.status || '').toLowerCase()
-  )
-
-  // SEMUA DATA NOTA LAMA DIMASUKKAN KEMBALI KE FORM
-  setFormData({
-    tanggal: formatDateForInput(invoice.tanggal),
-
-    customer_id:
-      invoice.customerId !== null &&
-      invoice.customerId !== undefined
-        ? String(invoice.customerId)
-        : '',
-
-    driver_id:
-      invoice.driverId !== null &&
-      invoice.driverId !== undefined
-        ? String(invoice.driverId)
-        : '',
-
-    tanggal_kirim_dari:
-      formatDateForInput(invoice.tanggalKirimDari),
-
-    tanggal_kirim_sampai:
-      formatDateForInput(invoice.tanggalKirimSampai),
-  })
-
-  // Surat jalan lama tetap ditampilkan
-  setSuratJalanItems(existingItems)
-
-  // Item lama tetap terpilih
-  setSelectedItemIds(
-    existingItems
-      .map((item) => {
-        return (
-          item.item_id ??
-          item.id ??
-          item.surat_jalan_item_id
-        )
+    if (!invoice) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Data tidak ditemukan',
+        text: 'Data nota tagihan tidak ditemukan.',
+        confirmButtonColor: '#51448C',
       })
-      .filter(
-        (itemId) =>
-          itemId !== null &&
-          itemId !== undefined
+      return
+    }
+
+    const existingItems = Array.isArray(invoice.items)
+      ? invoice.items
+      : []
+
+    const existingItemIds = normalizeIds(
+      existingItems
+        .map((item) => getSuratJalanItemId(item))
+        .filter((itemId) => itemId !== null && itemId !== undefined)
+    )
+
+    // Simpan ID item lama SEBELUM state apa pun berubah.
+    editSelectedItemIdsRef.current = existingItemIds
+
+    // Pastikan daftar driver sudah tersedia sebelum modal ditampilkan.
+    let currentDrivers = drivers
+
+    if (!Array.isArray(currentDrivers) || currentDrivers.length === 0) {
+      currentDrivers = await fetchDrivers()
+    }
+
+    // Ambil ID driver dari API nota.
+    // Jika API nota tidak mengirim driver_id, cari berdasarkan nama driver.
+    let driverId =
+      invoice.driverId !== null && invoice.driverId !== undefined
+        ? String(invoice.driverId)
+        : ''
+
+    if (!driverId && invoice.driver) {
+      const matchedDriver = currentDrivers.find(
+        (driver) =>
+          String(driver.name || '').trim().toLowerCase() ===
+          String(invoice.driver || '').trim().toLowerCase()
       )
-  )
 
-  // Total lama tetap ditampilkan
-  setTotalTagihan(
-    Number(invoice.jumlah || 0)
-  )
+      if (matchedDriver) {
+        driverId = String(matchedDriver.id)
+      }
+    }
 
-  setSuratJalanSearched(
-    existingItems.length > 0
-  )
+    // Beberapa response backend menyimpan driver di detail item.
+    if (!driverId && existingItems.length > 0) {
+      const firstItem = existingItems[0]
+      const itemDriverId =
+        firstItem?.driver_id ??
+        firstItem?.id_driver ??
+        firstItem?.driver?.id
 
-  setIsFormClosing(false)
-  setIsFormOpen(true)
-}
+      if (itemDriverId !== null && itemDriverId !== undefined) {
+        driverId = String(itemDriverId)
+      }
+    }
 
+    setEditingId(Number(invoice.id))
+
+    setEditingStatus(
+      String(invoice.status || '').toLowerCase()
+    )
+
+    setFormData({
+      tanggal: formatDateForInput(invoice.tanggal),
+      customer_id:
+        invoice.customerId !== null &&
+        invoice.customerId !== undefined
+          ? String(invoice.customerId)
+          : '',
+      driver_id: driverId,
+      tanggal_kirim_dari:
+        formatDateForInput(invoice.tanggalKirimDari),
+      tanggal_kirim_sampai:
+        formatDateForInput(invoice.tanggalKirimSampai),
+    })
+
+    // Tampilkan data lama terlebih dahulu.
+    setSuratJalanItems(existingItems)
+    setSelectedItemIds(existingItemIds)
+    setTotalTagihan(Number(invoice.jumlah || 0))
+    setSuratJalanSearched(existingItems.length > 0)
+
+    setIsFormClosing(false)
+    setIsFormOpen(true)
+
+    // Jika driver_id tidak bisa ditemukan, jangan memaksa user memilih
+    // driver baru. Beri informasi bahwa data nota tidak memiliki ID driver.
+    if (!driverId) {
+      console.warn('Driver ID tidak ditemukan pada data nota edit:', invoice)
+    }
+  }
 
   // ======================================================
   // CLOSE FORM
@@ -1438,37 +1429,37 @@ const Nota = () => {
     // ==================================================
     // VALIDASI SURAT JALAN
     // ==================================================
-    if (
-      suratJalanItems.length === 0
-    ) {
+    if (editingId !== null) {
+      // EDIT cukup memastikan item yang akan disimpan tersedia.
+      if (selectedItemIds.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Surat jalan belum dipilih',
+          text: 'Pilih minimal satu surat jalan.',
+          confirmButtonColor: '#51448C',
+        })
+        return
+      }
+    } else {
+      if (suratJalanItems.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Surat jalan tidak tersedia',
+          text: 'Tidak ada surat jalan yang dapat digunakan untuk nota tagihan.',
+          confirmButtonColor: '#51448C',
+        })
+        return
+      }
 
-      Swal.fire({
-        icon: 'warning',
-        title: 'Surat jalan tidak tersedia',
-        text:
-          'Tidak ada surat jalan yang dapat digunakan untuk nota tagihan.',
-        confirmButtonColor: '#51448C',
-      })
-
-      return
-
-    }
-
-
-    if (
-      selectedItemIds.length === 0
-    ) {
-
-      Swal.fire({
-        icon: 'warning',
-        title: 'Surat jalan belum dipilih',
-        text:
-          'Pilih minimal satu surat jalan.',
-        confirmButtonColor: '#51448C',
-      })
-
-      return
-
+      if (selectedItemIds.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Surat jalan belum dipilih',
+          text: 'Pilih minimal satu surat jalan.',
+          confirmButtonColor: '#51448C',
+        })
+        return
+      }
     }
 
 
@@ -1589,23 +1580,10 @@ const Nota = () => {
       try {
 
         const payload = {
-
-          customer_id:
-            Number(
-              formData.customer_id
-            ),
-
-          tanggal_kirim_dari:
-            formData.tanggal_kirim_dari,
-
-          tanggal_kirim_sampai:
-            formData.tanggal_kirim_sampai,
-
-          item_ids:
-            normalizeIds(
-              selectedItemIds
-            ),
-
+          customer_id: Number(formData.customer_id),
+          tanggal_kirim_dari: formData.tanggal_kirim_dari,
+          tanggal_kirim_sampai: formData.tanggal_kirim_sampai,
+          item_ids: normalizeIds(selectedItemIds),
         }
 
 
@@ -1750,52 +1728,217 @@ const Nota = () => {
   // ======================================================
   // PEMBAYARAN
   // ======================================================
-  const handlePayment = (row) => {
+  const handlePayment = async (row) => {
+
+    if (!row?.id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data nota tidak valid',
+        text: 'ID nota tidak ditemukan.',
+        confirmButtonColor: '#51448C',
+      })
+      return
+    }
 
     const today =
       new Date()
         .toISOString()
         .split('T')[0]
 
-
-    const sisaTagihan =
-      Number(
-        row.sisa || 0
-      )
-
-
-    setPaymentData({
-
-      id:
-        row.id,
-
-      noNota:
-        row.noNota || '',
-
-      tanggalBayar:
-        today,
-
-      totalTagihan:
-        Number(
-          row.jumlah || 0
-        ),
-
-      sisaTagihan:
-        sisaTagihan,
-
-      status:
-        'normal',
-
-      jumlahBayar:
-        '',
-
-    })
-
+    setPaymentDetailLoading(true)
+    setPaymentHistory([])
 
     setIsPaymentClosing(false)
     setIsPaymentOpen(true)
 
+    try {
+
+      const response =
+        await getNotaTagihanById(row.id)
+
+      const detail =
+        response?.data ??
+        response?.item ??
+        response ??
+        {}
+
+      const pembayaran =
+        Array.isArray(detail.pembayaran)
+          ? detail.pembayaran
+          : Array.isArray(detail.riwayat_pembayaran)
+            ? detail.riwayat_pembayaran
+            : []
+
+      setPaymentHistory(pembayaran)
+
+      setPaymentData({
+        id:
+          detail.id ??
+          row.id,
+        noNota:
+          detail.no_nota ??
+          row.noNota ??
+          '',
+        tanggalBayar:
+          today,
+        totalTagihan:
+          Number(
+            detail.total_tagihan ??
+            row.jumlah ??
+            0
+          ),
+        sisaTagihan:
+          Number(
+            detail.sisa ??
+            row.sisa ??
+            0
+          ),
+        status:
+          'normal',
+        jumlahBayar:
+          '',
+      })
+
+    } catch (error) {
+
+      setPaymentHistory([])
+      setIsPaymentOpen(false)
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengambil detail nota',
+        text:
+          error?.message ||
+          'Data detail nota gagal diambil.',
+        confirmButtonColor: '#51448C',
+      })
+
+    } finally {
+
+      setPaymentDetailLoading(false)
+
+    }
+
   }
+
+  // ======================================================
+// DELETE DETAIL PEMBAYARAN
+// ======================================================
+const handleDeletePayment = async (payment) => {
+  if (!payment?.id) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Data pembayaran tidak valid',
+      text: 'ID pembayaran tidak ditemukan.',
+      confirmButtonColor: '#51448C',
+    })
+    return
+  }
+
+  if (!paymentData?.id) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Data nota tidak valid',
+      text: 'ID nota tidak ditemukan.',
+      confirmButtonColor: '#51448C',
+    })
+    return
+  }
+
+  const jumlahBayar = Number(
+    payment.jumlah_bayar ??
+    payment.jumlah ??
+    0
+  )
+
+  const result = await Swal.fire({
+    icon: 'warning',
+    title: 'Hapus Pembayaran?',
+    html: `
+      <div style="font-size:13px;color:#707070;line-height:1.8">
+        Pembayaran sebesar
+        <strong style="color:#51448C">
+          ${formatRupiah(jumlahBayar)}
+        </strong>
+        akan dihapus.
+        <br/>
+        Data pembayaran yang sudah dihapus tidak dapat dikembalikan.
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#999999',
+    reverseButtons: true,
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    setPaymentLoading(true)
+
+    // Kirim ID nota + ID pembayaran
+    const response = await deletePembayaran(
+      paymentData.id,
+      payment.id
+    )
+
+    // Ambil ulang detail nota setelah pembayaran dihapus
+    const detailResponse = await getNotaTagihanById(paymentData.id)
+
+    const detail =
+      detailResponse?.data ??
+      detailResponse?.item ??
+      detailResponse ??
+      {}
+
+    const pembayaran =
+      Array.isArray(detail.pembayaran)
+        ? detail.pembayaran
+        : Array.isArray(detail.riwayat_pembayaran)
+          ? detail.riwayat_pembayaran
+          : []
+
+    setPaymentHistory(pembayaran)
+
+    setPaymentData((current) => ({
+      ...current,
+      totalTagihan: Number(
+        detail.total_tagihan ??
+        current.totalTagihan ??
+        0
+      ),
+      sisaTagihan: Number(
+        detail.sisa ??
+        0
+      ),
+    }))
+
+    // Refresh tabel nota utama
+    await fetchNotaTagihan()
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Berhasil',
+      text:
+        response?.message ||
+        'Pembayaran berhasil dihapus.',
+      confirmButtonColor: '#51448C',
+    })
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Menghapus Pembayaran',
+      text:
+        error?.message ||
+        'Pembayaran gagal dihapus.',
+      confirmButtonColor: '#51448C',
+    })
+  } finally {
+    setPaymentLoading(false)
+  }
+}
 
 
   // ======================================================
@@ -2517,17 +2660,27 @@ const Nota = () => {
 
   ]
 
-  const paymentHistory =
-    invoices.find(
-      (invoice) =>
-        Number(invoice.id) === Number(paymentData.id)
-    )?.pembayaran || []
-
-
   // ======================================================
   // RETURN
   // ======================================================
   return (
+
+    <>
+      <style>{`
+        /* Pastikan popup SweetAlert selalu berada di atas sidebar + modal. */
+        .swal2-container {
+          z-index: 10000 !important;
+        }
+        .swal2-popup {
+          max-width: min(92vw, 520px);
+        }
+        @media (max-width: 639px) {
+          .swal2-popup {
+            width: calc(100vw - 24px) !important;
+            margin: 12px;
+          }
+        }
+      `}</style>
 
     <main className="min-h-screen bg-white px-3 py-5 sm:px-5 sm:py-7 lg:ml-64 lg:px-8 lg:py-10">
 
@@ -2918,7 +3071,7 @@ const Nota = () => {
       {isFormOpen && (
 
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-2 sm:p-4 ${
+          className={`fixed inset-0 left-0 z-[9990] flex items-center justify-center bg-black/30 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:p-4 lg:left-64 ${
             isFormClosing
               ? 'modal-backdrop-closing'
               : ''
@@ -2928,7 +3081,7 @@ const Nota = () => {
           <div
             role="dialog"
             aria-modal="true"
-            className={`flex max-h-[94vh] w-full max-w-[900px] flex-col overflow-hidden rounded-2xl bg-[#f7f7f7] shadow-[0_12px_40px_rgba(0,0,0,0.22)] ${
+            className={`flex max-h-[calc(100dvh-1rem)] w-full max-w-[900px] sm:max-h-[94vh] flex-col overflow-hidden rounded-2xl bg-[#f7f7f7] shadow-[0_12px_40px_rgba(0,0,0,0.22)] ${
               isFormClosing
                 ? 'modal-panel-closing'
                 : ''
@@ -3106,35 +3259,34 @@ const Nota = () => {
 
                   <SearchableDropdown
                     label="Driver"
-                    value={
-                      formData.driver_id
-                    }
-                    options={
-                      drivers
+                    value={formData.driver_id}
+                    options={drivers}
+                    selectedLabel={
+                      editingId !== null
+                        ? invoices.find(
+                            (item) =>
+                              Number(item.id) ===
+                              Number(editingId)
+                          )?.driver || ''
+                        : ''
                     }
                     onChange={(value) => {
+                      // Jika user benar-benar mengganti driver saat edit,
+                      // item surat jalan lama memang harus di-reset karena
+                      // kandidat surat jalan akan berubah.
+                      if (String(value) !== String(formData.driver_id)) {
+                        editSelectedItemIdsRef.current = []
+                        setSelectedItemIds([])
+                      }
 
-                      editSelectedItemIdsRef.current =
-                        []
-
-                      setSelectedItemIds([])
-
-                      setFormData(
-                        (current) => ({
-                          ...current,
-                          driver_id:
-                            value,
-                        })
-                      )
-
+                      setFormData((current) => ({
+                        ...current,
+                        driver_id: String(value),
+                      }))
                     }}
                     placeholder="Pilih Driver"
-                    loading={
-                      loadingDriver
-                    }
-                    disabled={
-                      loadingDriver
-                    }
+                    loading={loadingDriver}
+                    disabled={loadingDriver}
                   />
 
                 </div>
@@ -3645,7 +3797,7 @@ const Nota = () => {
       ================================================== */}
       {isPreviewOpen && (
         <div
-          className={`fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2 backdrop-blur-[2px] sm:p-4 ${
+          className={`fixed inset-0 left-0 z-[9992] flex items-center justify-center bg-black/50 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-[2px] sm:p-4 lg:left-64 ${
             isPreviewClosing
               ? 'modal-backdrop-closing'
               : ''
@@ -3660,7 +3812,7 @@ const Nota = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="preview-nota-title"
-            className={`flex max-h-[96vh] w-full max-w-[980px] flex-col overflow-hidden rounded-2xl bg-[#f3f3f5] shadow-[0_20px_70px_rgba(0,0,0,0.30)] ${
+            className={`flex max-h-[calc(100dvh-1rem)] w-full max-w-[980px] sm:max-h-[96vh] flex-col overflow-hidden rounded-2xl bg-[#f3f3f5] shadow-[0_20px_70px_rgba(0,0,0,0.30)] ${
               isPreviewClosing
                 ? 'modal-panel-closing'
                 : ''
@@ -3792,8 +3944,8 @@ const Nota = () => {
 
             {/* FOOTER */}
             <div className="shrink-0 border-t border-[#dedde5] bg-white px-4 py-3 sm:px-6">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[10px] text-[#999999] sm:text-xs">
+              <div className="flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="min-w-0 text-[10px] text-[#999999] sm:text-xs">
                   Pastikan isi nota sudah benar sebelum melakukan print ulang.
                 </div>
 
@@ -3818,7 +3970,7 @@ const Nota = () => {
       {isPaymentOpen && (
 
         <div
-          className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-2 sm:p-4 ${
+          className={`fixed inset-0 left-0 z-[9991] flex items-center justify-center bg-black/40 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:p-4 lg:left-64 ${
             isPaymentClosing
               ? 'modal-backdrop-closing'
               : ''
@@ -3828,7 +3980,7 @@ const Nota = () => {
           <div
             role="dialog"
             aria-modal="true"
-            className={`flex max-h-[94vh] w-full max-w-[1050px] flex-col overflow-hidden rounded-2xl bg-[#f7f7f7] shadow-[0_15px_50px_rgba(0,0,0,0.25)] ${
+            className={`flex max-h-[calc(100dvh-1rem)] w-full max-w-[1050px] sm:max-h-[94vh] flex-col overflow-hidden rounded-2xl bg-[#f7f7f7] shadow-[0_15px_50px_rgba(0,0,0,0.25)] ${
               isPaymentClosing
                 ? 'modal-panel-closing'
                 : ''
@@ -4188,7 +4340,19 @@ const Nota = () => {
 
 
                         <tbody className="divide-y divide-[#eeeeee]">
-                          {paymentHistory.length > 0 ? (
+                          {paymentDetailLoading ? (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="h-[120px] px-4 py-6 text-center text-xs text-[#8f899d]"
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#ddd8f0] border-t-[#51448C]" />
+                                Memuat riwayat pembayaran...
+                              </div>
+                            </td>
+                          </tr>
+                        ) : paymentHistory.length > 0 ? (
                             paymentHistory.map((payment, index) => {
                               const status =
                                 String(payment.status || '').toLowerCase() === 'dilunaskan' ||
@@ -4214,8 +4378,33 @@ const Nota = () => {
                                       payment.jumlah_bayar ?? payment.jumlah
                                     )}
                                   </td>
-                                  <td className="px-4 py-3 text-center text-[#999999]">
-                                    -
+                                  <td className="px-4 py-3 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDeletePayment(payment)
+                                      }
+                                      disabled={paymentLoading}
+                                      className="inline-flex items-center justify-center rounded-md border border-[#f0caca] bg-[#fff5f5] px-3 py-1.5 text-xs font-semibold text-[#d33] transition hover:bg-[#ffe5e5] disabled:cursor-not-allowed disabled:opacity-50"
+                                      title="Hapus pembayaran"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="mr-1.5 h-3.5 w-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h10"
+                                        />
+                                      </svg>
+
+                                      Hapus
+                                    </button>
                                   </td>
                                 </tr>
                               )
@@ -4338,6 +4527,7 @@ const Nota = () => {
       )}
 
     </main>
+    </>
   )
 }
 

@@ -12,7 +12,7 @@ import AppLayout from '../components/layout/AppLayout'
 import ProtectedRoute from './ProtectedRoutes'
 import ChangePassword from '../features/auth/pages/ChangePassword'
 import NotaTagihan from '../features/Nota/pages/Nota'
-import LaporanNotaTagihan from '../features/Nota/pages/LaporanNotaTagihan'
+import LaporanNotaTagihan from '../features/laporan/pages/LaporanNotaTagihan'
 
 const AppRoutes = () => {
     return (

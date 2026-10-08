@@ -7,6 +7,7 @@ import materialIcon from '../../assets/img/icon/material_icon.png'
 import proyekIcon from '../../assets/img/icon/proyek_icon.png'
 import suratJalanIcon from '../../assets/img/icon/surat_jalan_icon.png'
 import notaTagihanIcon from '../../assets/img/icon/NotaIcon.png'
+import reportIcon from '../../assets/img/icon/ReportIcon.png'
 
 const Sidebar = () => {
   const [openSection, setOpenSection] = useState(null)
@@ -87,7 +88,7 @@ const Sidebar = () => {
             </SidebarButton>
 
             <SidebarButton to="/data-project" icon={proyekIcon}>
-              Data Project
+              Data Proyek
             </SidebarButton>
           </SidebarSection>
 
@@ -111,8 +112,8 @@ const Sidebar = () => {
             isOpen={openSection === 'laporan'}
             onToggle={() => toggleSection('laporan')}
           >
-            <SidebarButton to="/laporan-nota-tagihan">
-              Laporan Nota Tagihan
+            <SidebarButton to="/laporan-nota-tagihan" icon={reportIcon}>
+              Laporan
             </SidebarButton>
           </SidebarSection>
         </nav>

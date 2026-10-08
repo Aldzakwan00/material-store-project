@@ -1108,6 +1108,52 @@ const handleEditSuratJalan = async (item) => {
 }
 
     // =====================================================
+    // ALERT KONFLIK SURAT JALAN
+    // =====================================================
+    const showSuratJalanConflictAlert = async (action = 'mengubah') => {
+        const isDelete = action === 'menghapus'
+
+        await Swal.fire({
+            icon: 'warning',
+            title: `Surat Jalan Tidak Dapat ${isDelete ? 'Dihapus' : 'Diubah'}`,
+            html: `
+                <div style="text-align: center;">
+                    <p style="margin: 0 0 12px 0; line-height: 1.6;">
+                        Surat jalan ini sudah digunakan dalam
+                        <strong>Nota Tagihan</strong>.
+                    </p>
+
+                    <p style="margin: 0; color: #666; line-height: 1.6;">
+                        Surat jalan yang sudah masuk ke nota tagihan
+                        tidak dapat ${isDelete ? 'dihapus' : 'diubah'}.
+                    </p>
+
+                    <div style="
+                        margin-top: 16px;
+                        padding: 12px 14px;
+                        background: #FFF7ED;
+                        border-radius: 12px;
+                        color: #9A3412;
+                        font-size: 14px;
+                        line-height: 1.6;
+                    ">
+                        Silakan hapus Nota Tagihan yang menggunakan
+                        surat jalan ini terlebih dahulu,
+                        kemudian coba ${isDelete ? 'hapus' : 'ubah'} kembali.
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'Mengerti',
+            confirmButtonColor: '#51448C',
+            width: '480px',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-6',
+            },
+        })
+    }
+
+    // =====================================================
     // DELETE SURAT JALAN
     // =====================================================
     // =====================================================
@@ -1115,103 +1161,112 @@ const handleEditSuratJalan = async (item) => {
 // DELETE SURAT JALAN
 // =====================================================
 const handleDeleteSuratJalan = async (item) => {
-    // =================================================
-    // AMBIL ID SURAT JALAN PARENT
-    // =================================================
-    const suratJalanId =
-        item?.surat_jalan_id ??
-        item?.suratJalanId ??
-        item?.parent_id
+        const suratJalanId =
+            item?.surat_jalan_id ??
+            item?.suratJalanId ??
+            item?.parent_id
 
-    if (
-        suratJalanId === undefined ||
-        suratJalanId === null ||
-        suratJalanId === ''
-    ) {
-        showErrorAlert(
-            'Data Tidak Ditemukan',
-            'ID surat jalan tidak ditemukan.'
-        )
-        return
-    }
+        if (
+            suratJalanId === undefined ||
+            suratJalanId === null ||
+            suratJalanId === ''
+        ) {
+            showErrorAlert(
+                'Data Tidak Ditemukan',
+                'ID surat jalan tidak ditemukan.'
+            )
+            return
+        }
 
-    // =================================================
-    // CARI NOMOR SURAT JALAN
-    // =================================================
-    const parent =
-        suratJalanParents.find(
+        const parent = suratJalanParents.find(
             (suratJalan) =>
                 Number(suratJalan.id) ===
                 Number(suratJalanId)
         )
 
-    const noSuratJalan =
-        parent?.no_surat_jalan ||
-        item?.no_surat_jalan ||
-        '-'
+        const noSuratJalan =
+            parent?.no_surat_jalan ||
+            item?.no_surat_jalan ||
+            '-'
 
-    // =================================================
-    // KONFIRMASI
-    // =================================================
-    const result = await Swal.fire({
-        icon: 'warning',
-        title: 'Hapus Surat Jalan?',
-        text: `Surat jalan ${noSuratJalan} beserta seluruh itemnya akan dihapus.`,
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Hapus',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6b7280',
-        customClass: {
-            popup: 'rounded-2xl',
-        },
-    })
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Hapus Surat Jalan?',
+            html: `
+                <div style="text-align: center;">
+                    <p style="margin: 0 0 8px 0; line-height: 1.6;">
+                        Surat jalan <strong>${noSuratJalan}</strong>
+                        beserta seluruh itemnya akan dihapus.
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px; line-height: 1.5;">
+                        Pastikan surat jalan ini belum digunakan dalam Nota Tagihan.
+                    </p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#51448C',
+            cancelButtonColor: '#9CA3AF',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-6',
+                cancelButton: 'rounded-xl px-6',
+            },
+        })
 
-    if (!result.isConfirmed) {
-        return
-    }
-
-    try {
-        setIsSaving(true)
-
-        // =================================================
-        // DELETE PARENT
-        // =================================================
-        await deleteSuratJalan(
-            Number(suratJalanId)
-        )
-
-        // =================================================
-        // REFRESH DATA
-        // =================================================
-        try {
-            const {
-                latestParents,
-            } = await refreshSuratJalanData()
-
-        } catch {
-            // DELETE SUDAH BERHASIL.
-            // Kalau refresh gagal, jangan tampilkan
-            // sebagai error delete.
+        if (!result.isConfirmed) {
+            return
         }
 
-        // =================================================
-        // TAMPILKAN BERHASIL
-        // =================================================
-        showSuccessAlert(
-            'Berhasil Dihapus',
-            `Surat jalan ${noSuratJalan} berhasil dihapus.`
-        )
-    } catch (error) {
-        showErrorAlert(
-            'Gagal Menghapus',
-            error.message ||
-                'Surat jalan gagal dihapus.'
-        )
-    } finally {
-        setIsSaving(false)
+        try {
+            setIsSaving(true)
+
+            await deleteSuratJalan(Number(suratJalanId))
+
+            try {
+                const { latestParents } =
+                    await refreshSuratJalanData()
+
+                setFormData((current) => ({
+                    ...current,
+                    no_surat_jalan:
+                        generateNextSuratJalanNumber(
+                            latestParents
+                        ),
+                }))
+            } catch {
+                // Delete sudah berhasil.
+                // Jika refresh gagal, jangan anggap delete gagal.
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Dihapus',
+                text: `Surat jalan ${noSuratJalan} berhasil dihapus.`,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#51448C',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl px-6',
+                },
+            })
+        } catch (error) {
+            if (error?.status === 409) {
+                await showSuratJalanConflictAlert('menghapus')
+                return
+            }
+
+            showErrorAlert(
+                'Gagal Menghapus',
+                error?.message ||
+                    'Surat jalan gagal dihapus.'
+            )
+        } finally {
+            setIsSaving(false)
+        }
     }
-}
 
     // =====================================================
     // SUBMIT
@@ -1220,302 +1275,214 @@ const handleDeleteSuratJalan = async (item) => {
 // SUBMIT
 // =====================================================
 const handleSubmit = async (event) => {
-    event.preventDefault()
+        event.preventDefault()
 
-    // =================================================
-    // VALIDASI NOMOR SURAT JALAN
-    // =================================================
-    if (!formData.no_surat_jalan.trim()) {
-        showErrorAlert(
-            'Data Belum Lengkap',
-            'Nomor surat jalan harus diisi.'
-        )
-        return
-    }
+        if (isSaving) {
+            return
+        }
 
-    // =================================================
-    // VALIDASI TANGGAL
-    // =================================================
-    if (!formData.tanggal) {
-        showErrorAlert(
-            'Data Belum Lengkap',
-            'Tanggal surat jalan harus diisi.'
-        )
-        return
-    }
+        if (!formData.no_surat_jalan.trim()) {
+            showErrorAlert(
+                'Data Belum Lengkap',
+                'Nomor surat jalan harus diisi.'
+            )
+            return
+        }
 
-    // =================================================
-    // VALIDASI DRIVER
-    // =================================================
-    if (!formData.driver_id) {
-        showErrorAlert(
-            'Data Belum Lengkap',
-            'Silakan pilih nama supir terlebih dahulu.'
-        )
-        return
-    }
+        if (!formData.tanggal) {
+            showErrorAlert(
+                'Data Belum Lengkap',
+                'Tanggal surat jalan harus diisi.'
+            )
+            return
+        }
 
-    // =================================================
-    // VALIDASI CUSTOMER
-    // =================================================
-    if (!formData.customer_id) {
-        showErrorAlert(
-            'Data Belum Lengkap',
-            'Silakan pilih customer terlebih dahulu.'
-        )
-        return
-    }
+        if (!formData.driver_id) {
+            showErrorAlert(
+                'Data Belum Lengkap',
+                'Silakan pilih nama supir terlebih dahulu.'
+            )
+            return
+        }
 
-    // =================================================
-    // VALIDASI PROJECT
-    // =================================================
-    if (!formData.proyek_id) {
-        showErrorAlert(
-            'Data Belum Lengkap',
-            'Silakan pilih proyek terlebih dahulu.'
-        )
-        return
-    }
+        if (!formData.customer_id) {
+            showErrorAlert(
+                'Data Belum Lengkap',
+                'Silakan pilih customer terlebih dahulu.'
+            )
+            return
+        }
 
-    // =================================================
-    // NORMALISASI ITEM
-    // =================================================
-    const normalizedItems = items.map(
-        (item) => {
-            let materialId =
-                item.material_id
+        if (!formData.proyek_id) {
+            showErrorAlert(
+                'Data Belum Lengkap',
+                'Silakan pilih proyek terlebih dahulu.'
+            )
+            return
+        }
 
-            // Jika material_id kosong,
-            // cari berdasarkan nama barang
-            if (
-                !materialId &&
-                item.nama_barang
-            ) {
-                const material =
-                    materials.find(
-                        (materialItem) =>
-                            String(
-                                materialItem.nama_barang ||
-                                    ''
-                            )
-                                .trim()
-                                .toLowerCase() ===
-                            String(
-                                item.nama_barang ||
-                                    ''
-                            )
-                                .trim()
-                                .toLowerCase()
-                    )
+        const normalizedItems = items.map((item) => {
+            let materialId = item.material_id
+
+            if (!materialId && item.nama_barang) {
+                const material = materials.find(
+                    (materialItem) =>
+                        String(materialItem.nama_barang || '')
+                            .trim()
+                            .toLowerCase() ===
+                        String(item.nama_barang || '')
+                            .trim()
+                            .toLowerCase()
+                )
 
                 if (material) {
-                    materialId =
-                        material.id
+                    materialId = material.id
                 }
             }
 
             return {
                 ...item,
-
-                material_id:
-                    materialId,
-
-                qty:
-                    Number(item.qty),
+                material_id: materialId,
+                qty: Number(item.qty),
+                harga_jual: Number(item.harga_jual),
             }
-        }
-    )
-
-    // =================================================
-    // CEK MATERIAL
-    // =================================================
-    const itemsWithoutMaterial =
-        normalizedItems.filter(
-            (item) =>
-                !item.material_id
-        )
-
-    if (
-        itemsWithoutMaterial.length > 0
-    ) {
-        showErrorAlert(
-            'Material Tidak Valid',
-            'Ada material yang belum memiliki ID material. Silakan pilih ulang material tersebut.'
-        )
-        return
-    }
-
-    // =================================================
-    // CEK QUANTITY
-    // =================================================
-    const itemsWithInvalidQty =
-        normalizedItems.filter(
-            (item) =>
-                !Number.isFinite(
-                    item.qty
-                ) ||
-                item.qty <= 0
-        )
-
-    if (
-        itemsWithInvalidQty.length > 0
-    ) {
-        showErrorAlert(
-            'Quantity Tidak Valid',
-            'Quantity setiap material harus lebih dari 0.'
-        )
-        return
-    }
-
-    // =================================================
-    // VALIDASI HARGA JUAL
-    // =================================================
-    const itemsWithInvalidSellPrice =
-        normalizedItems.filter((item) => {
-            const hargaJual = Number(item.harga_jual)
-
-            return (
-                String(item.harga_jual ?? '').trim() === '' ||
-                !Number.isFinite(hargaJual) ||
-                hargaJual < 0
-            )
         })
 
-    if (itemsWithInvalidSellPrice.length > 0) {
-        showErrorAlert(
-            'Harga Jual Tidak Valid',
-            'Harga jual setiap material harus berupa angka nol atau lebih.'
-        )
-        return
-    }
-
-    // =================================================
-    // CEK DUPLIKAT MATERIAL
-    // =================================================
-    const materialIds =
-        normalizedItems.map(
-            (item) =>
-                String(
-                    item.material_id
-                )
+        const itemsWithoutMaterial = normalizedItems.filter(
+            (item) => !item.material_id
         )
 
-    const hasDuplicate =
-        new Set(materialIds).size !==
-        materialIds.length
-
-    if (hasDuplicate) {
-        showErrorAlert(
-            'Material Duplikat',
-            'Material yang sama tidak boleh dipilih lebih dari satu kali.'
-        )
-        return
-    }
-
-    // =================================================
-    // PAYLOAD
-    // =================================================
-    const payload = {
-        no_surat_jalan:
-            formData.no_surat_jalan,
-
-        tanggal:
-            formData.tanggal,
-
-        driver_id:
-            Number(formData.driver_id),
-
-        customer_id:
-            Number(formData.customer_id),
-
-        proyek_id:
-            Number(formData.proyek_id),
-
-        items:
-            normalizedItems.map(
-                (item) => ({
-                    material_id:
-                        Number(
-                            item.material_id
-                        ),
-
-                    qty:
-                        Number(
-                            item.qty
-                        ),
-
-                    harga_jual:
-                        Number(
-                            item.harga_jual
-                        ),
-                })
-            ),
-    }
-
-    try {
-        setIsSaving(true)
-
-        // =================================================
-        // UPDATE
-        // =================================================
-        if (
-            isEditing &&
-            editingSuratJalanId
-        ) {
-            await updateSuratJalan(
-                editingSuratJalanId,
-                payload
+        if (itemsWithoutMaterial.length > 0) {
+            showErrorAlert(
+                'Material Tidak Valid',
+                'Ada material yang belum memiliki ID material. Silakan pilih ulang material tersebut.'
             )
-
-            const {
-                latestParents,
-            } =
-                await refreshSuratJalanData()
-
-            showSuccessAlert(
-                'Berhasil Diupdate',
-                `Surat jalan ${formData.no_surat_jalan} berhasil diupdate.`
-            )
-
-            resetForm()
-
             return
         }
 
-        // =================================================
-        // CREATE
-        // =================================================
-        await createSuratJalan(
-            payload
+        const itemsWithInvalidQty = normalizedItems.filter(
+            (item) =>
+                !Number.isFinite(item.qty) ||
+                item.qty <= 0
         )
 
-        const {
-            latestParents,
-        } =
+        if (itemsWithInvalidQty.length > 0) {
+            showErrorAlert(
+                'Quantity Tidak Valid',
+                'Quantity setiap material harus lebih dari 0.'
+            )
+            return
+        }
+
+        const itemsWithInvalidSellPrice = normalizedItems.filter(
+            (item) =>
+                String(item.harga_jual ?? '').trim() === '' ||
+                !Number.isFinite(item.harga_jual) ||
+                item.harga_jual < 0
+        )
+
+        if (itemsWithInvalidSellPrice.length > 0) {
+            showErrorAlert(
+                'Harga Jual Tidak Valid',
+                'Harga jual setiap material harus berupa angka nol atau lebih.'
+            )
+            return
+        }
+
+        const materialIds = normalizedItems.map((item) =>
+            String(item.material_id)
+        )
+
+        const hasDuplicate =
+            new Set(materialIds).size !== materialIds.length
+
+        if (hasDuplicate) {
+            showErrorAlert(
+                'Material Duplikat',
+                'Material yang sama tidak boleh dipilih lebih dari satu kali.'
+            )
+            return
+        }
+
+        const payload = {
+            no_surat_jalan: formData.no_surat_jalan.trim(),
+            tanggal: formData.tanggal,
+            driver_id: Number(formData.driver_id),
+            customer_id: Number(formData.customer_id),
+            proyek_id: Number(formData.proyek_id),
+            items: normalizedItems.map((item) => ({
+                material_id: Number(item.material_id),
+                qty: Number(item.qty),
+                harga_jual: Number(item.harga_jual),
+            })),
+        }
+
+        try {
+            setIsSaving(true)
+
+            if (isEditing && editingSuratJalanId) {
+                try {
+                    await updateSuratJalan(
+                        editingSuratJalanId,
+                        payload
+                    )
+                } catch (error) {
+                    if (error?.status === 409) {
+                        await showSuratJalanConflictAlert('mengubah')
+                        return
+                    }
+
+                    throw error
+                }
+
+                await refreshSuratJalanData()
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil Diupdate',
+                    text: `Surat jalan ${formData.no_surat_jalan.trim()} berhasil diupdate.`,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#51448C',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6',
+                    },
+                })
+
+                resetForm()
+                return
+            }
+
+            await createSuratJalan(payload)
             await refreshSuratJalanData()
 
-        showSuccessAlert(
-            'Berhasil Disimpan',
-            `Surat jalan ${formData.no_surat_jalan} berhasil dibuat.`
-        )
+            await Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Disimpan',
+                text: `Surat jalan ${formData.no_surat_jalan.trim()} berhasil dibuat.`,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#51448C',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl px-6',
+                },
+            })
 
-        resetForm()
-    } catch (error) {
-        showErrorAlert(
-            isEditing
-                ? 'Gagal Mengupdate'
-                : 'Gagal Menyimpan',
-            error.message ||
-                (
-                    isEditing
+            resetForm()
+        } catch (error) {
+            showErrorAlert(
+                isEditing
+                    ? 'Gagal Mengupdate Surat Jalan'
+                    : 'Gagal Menyimpan Surat Jalan',
+                error?.message ||
+                    (isEditing
                         ? 'Surat jalan gagal diupdate.'
-                        : 'Surat jalan gagal dibuat.'
-                )
-        )
-    } finally {
-        setIsSaving(false)
+                        : 'Surat jalan gagal dibuat.')
+            )
+        } finally {
+            setIsSaving(false)
+        }
     }
-}
 
     // =====================================================
     // TABLE COLUMNS
@@ -1761,7 +1728,7 @@ const handleSubmit = async (event) => {
     // =====================================================
     if (isLoading) {
         return (
-            <main className="ml-64 flex min-h-screen items-center justify-center bg-gray-100 px-4">
+            <main className="ml-0 flex min-h-screen items-center justify-center bg-gray-100 px-4 lg:ml-64">
                 <div className="text-center">
                     <span className="mx-auto mb-3 block h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-[#51448C]" />
 
@@ -1777,7 +1744,26 @@ const handleSubmit = async (event) => {
     // RETURN
     // =====================================================
     return (
-        <main className="ml-64 min-h-screen bg-gray-100 px-6 py-8">
+        <>
+            <style>{`
+                /* SweetAlert harus selalu berada di atas sidebar dan modal. */
+                .swal2-container {
+                    z-index: 10000 !important;
+                }
+
+                .swal2-popup {
+                    max-width: min(92vw, 520px);
+                }
+
+                @media (max-width: 639px) {
+                    .swal2-popup {
+                        width: calc(100vw - 24px) !important;
+                        margin: 12px;
+                    }
+                }
+            `}</style>
+
+            <main className="ml-0 min-h-screen bg-gray-100 px-3 py-5 sm:px-5 sm:py-7 lg:ml-64 lg:px-8 lg:py-10">
 
             {/* HEADER */}
             <div className="mb-6 flex items-center gap-3">
@@ -1860,14 +1846,14 @@ const handleSubmit = async (event) => {
                 </div>
             {isFormModalOpen && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3 sm:p-6"
+                    className="fixed inset-0 left-0 z-[9990] flex items-center justify-center overflow-y-auto bg-black/45 p-2 sm:p-4 lg:left-64 lg:p-6"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="surat-jalan-modal-title"
                 >
             {/* FORM MODAL */}
-            <section className="max-h-[94vh] w-full max-w-[63rem] overflow-y-auto rounded-2xl border border-[#d9d9df] bg-[#f5f5f6] p-5 shadow-2xl">
-                <div className="mb-5 flex items-start justify-between">
+            <section className="max-h-[calc(100dvh-1rem)] w-full max-w-[63rem] overflow-y-auto rounded-2xl sm:max-h-[94vh] border border-[#d9d9df] bg-[#f5f5f6] p-5 shadow-2xl">
+                <div className="mb-5 flex items-start justify-between gap-3">
                     <div>
                         <h2
                             id="surat-jalan-modal-title"
@@ -2625,7 +2611,7 @@ const handleSubmit = async (event) => {
 
                     </div>
                     {/* SAVE / UPDATE */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 
                         {isEditing && (
                             <button
@@ -2667,6 +2653,7 @@ const handleSubmit = async (event) => {
             </section>
 
         </main>
+        </>
     )
 }
 

@@ -4,6 +4,7 @@ import customerIcon from '../../../assets/img/icon/customer_icon.png'
 import saveIcon from '../../../assets/img/icon/SaveIcon.png'
 import editIcon from '../../../assets/img/icon/EditIcon.png'
 import Swal from 'sweetalert2'
+
 import {
   getCustomers,
   createCustomer,
@@ -31,7 +32,9 @@ const CustomerPage = () => {
 
   const [formError, setFormError] = useState('')
 
+  // =========================================================
   // GET DATA CUSTOMER
+  // =========================================================
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -59,7 +62,9 @@ const CustomerPage = () => {
     fetchCustomers()
   }, [])
 
+  // =========================================================
   // EDIT DATA
+  // =========================================================
   const handleEdit = (id) => {
     const customer = customers.find((item) => item.id === id)
 
@@ -79,7 +84,9 @@ const CustomerPage = () => {
     }
   }
 
+  // =========================================================
   // FORM CHANGE
+  // =========================================================
   const handleFormChange = (event) => {
     const { name, value } = event.target
 
@@ -91,7 +98,28 @@ const CustomerPage = () => {
     setFormError('')
   }
 
+  // =========================================================
+  // OPEN ADD FORM
+  // =========================================================
+  const openAddForm = () => {
+    setEditingId(null)
+
+    setFormData({
+      id: null,
+      kode: '',
+      name: '',
+      npwp: '',
+      address: '',
+    })
+
+    setFormError('')
+    setIsFormClosing(false)
+    setIsFormOpen(true)
+  }
+
+  // =========================================================
   // CLOSE MODAL
+  // =========================================================
   const closeForm = () => {
     setIsFormClosing(true)
 
@@ -112,7 +140,9 @@ const CustomerPage = () => {
     }, 360)
   }
 
+  // =========================================================
   // SUBMIT FORM
+  // =========================================================
   const handleSubmit = async (event) => {
     event.preventDefault()
 
@@ -123,13 +153,16 @@ const CustomerPage = () => {
         text: 'Nama customer wajib diisi',
         confirmButtonColor: '#51448C',
       })
+
       return
     }
 
     try {
       setFormError('')
 
+      // =====================================================
       // EDIT CUSTOMER
+      // =====================================================
       if (editingId !== null) {
         const updatedCustomer = await updateCustomer(editingId, {
           id: formData.id,
@@ -165,7 +198,9 @@ const CustomerPage = () => {
         return
       }
 
+      // =====================================================
       // TAMBAH CUSTOMER
+      // =====================================================
       const newCustomer = await createCustomer({
         nama_customer: formData.name,
         no_npwp: formData.npwp || null,
@@ -205,7 +240,9 @@ const CustomerPage = () => {
     }
   }
 
+  // =========================================================
   // DELETE DATA
+  // =========================================================
   const handleDelete = async (id) => {
     const customer = customers.find((item) => item.id === id)
 
@@ -251,9 +288,11 @@ const CustomerPage = () => {
     }
   }
 
+  // =========================================================
   // SEARCH
+  // =========================================================
   const filteredCustomers = customers.filter((customer) => {
-    const searchValue = search.toLowerCase()
+    const searchValue = search.toLowerCase().trim()
 
     return (
       customer.name.toLowerCase().includes(searchValue) ||
@@ -262,6 +301,9 @@ const CustomerPage = () => {
     )
   })
 
+  // =========================================================
+  // TABLE COLUMNS
+  // =========================================================
   const columns = [
     {
       key: 'name',
@@ -278,12 +320,49 @@ const CustomerPage = () => {
   ]
 
   return (
-    <main className="min-h-screen bg-white px-4 py-6 sm:px-6 sm:py-8 lg:ml-64 lg:px-8 lg:py-10">
-      {/* HEADER */}
-      <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
+    <main
+      className="
+        min-h-screen
+        w-full
+        min-w-0
+        overflow-x-hidden
+        bg-white
+        px-3
+        py-5
+        sm:px-5
+        sm:py-6
+        md:px-6
+        lg:ml-64
+        lg:w-[calc(100%-16rem)]
+        lg:px-8
+        lg:py-8
+        xl:px-10
+      "
+    >
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+      <div
+        className="
+          mb-5
+          flex
+          min-w-0
+          items-center
+          gap-2
+          sm:mb-6
+          sm:gap-3
+        "
+      >
         <span
           aria-hidden="true"
-          className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-9 sm:w-9"
+          className="
+            h-7
+            w-7
+            shrink-0
+            bg-[#51448C]
+            sm:h-9
+            sm:w-9
+          "
           style={{
             maskImage: `url(${customerIcon})`,
             maskPosition: 'center',
@@ -296,35 +375,96 @@ const CustomerPage = () => {
           }}
         />
 
-        <h1 className="text-xl font-bold text-[#51448C] sm:text-2xl lg:text-3xl">
+        <h1
+          className="
+            min-w-0
+            truncate
+            text-lg
+            font-bold
+            text-[#51448C]
+            sm:text-2xl
+            lg:text-3xl
+          "
+        >
           DATA CUSTOMER
         </h1>
       </div>
 
-      {/* TABLE CONTAINER */}
-      <section className="rounded-xl border border-[#d9d9df] bg-[#f5f5f6] p-3 shadow-sm sm:rounded-2xl sm:p-4">
-        {/* TOP BAR */}
-        <div className="mb-4 flex items-center justify-between gap-4">
+      {/* =====================================================
+          TABLE CONTAINER
+      ====================================================== */}
+      <section
+        className="
+          w-full
+          min-w-0
+          overflow-hidden
+          rounded-xl
+          border
+          border-[#d9d9df]
+          bg-[#f5f5f6]
+          p-3
+          shadow-sm
+          sm:rounded-2xl
+          sm:p-4
+          lg:p-5
+        "
+      >
+        {/* ===================================================
+            TOP BAR
+        ==================================================== */}
+        <div
+          className="
+            mb-4
+            flex
+            w-full
+            min-w-0
+            flex-col
+            gap-3
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+          "
+        >
           {/* TAMBAH DATA */}
           <button
             type="button"
-            onClick={() => {
-              setEditingId(null)
-
-              setFormData({
-                id: null,
-                kode: '',
-                name: '',
-                npwp: '',
-                address: '',
-              })
-
-              setFormError('')
-              setIsFormOpen(true)
-            }}
-            className="inline-flex items-center rounded-md border border-[#e0e0e5] bg-white px-3 py-2 text-sm font-medium text-[#51448C] shadow-sm transition hover:bg-[#f8f6ff]"
+            onClick={openAddForm}
+            className="
+              inline-flex
+              h-10
+              w-fit
+              shrink-0
+              items-center
+              rounded-md
+              border
+              border-[#e0e0e5]
+              bg-white
+              px-3
+              text-sm
+              font-medium
+              text-[#51448C]
+              shadow-sm
+              transition
+              hover:bg-[#f8f6ff]
+              active:scale-[0.98]
+            "
           >
-            <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#51448C] text-sm font-bold text-white">
+            <span
+              className="
+                mr-2
+                inline-flex
+                h-5
+                w-5
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-[#51448C]
+                text-sm
+                font-bold
+                text-white
+              "
+            >
               +
             </span>
 
@@ -332,11 +472,31 @@ const CustomerPage = () => {
           </button>
 
           {/* SEARCH */}
-          <div className="w-48">
-            <div className="flex items-center rounded-md border border-[#e0e0e5] bg-white px-3">
+          <div
+            className="
+              w-full
+              min-w-0
+              sm:w-56
+              md:w-64
+            "
+          >
+            <div
+              className="
+                flex
+                h-10
+                w-full
+                min-w-0
+                items-center
+                rounded-md
+                border
+                border-[#e0e0e5]
+                bg-white
+                px-3
+              "
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-[#51448C]"
+                className="h-4 w-4 shrink-0 text-[#51448C]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -349,30 +509,77 @@ const CustomerPage = () => {
                 />
               </svg>
 
-              <div className="group relative ml-2">
+              <div className="group relative ml-2 min-w-0 flex-1">
                 <input
                   type="search"
                   placeholder="Search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-10 w-20 bg-transparent text-sm text-[#51448C] outline-none placeholder:text-[#51448C]"
+                  className="
+                    h-9
+                    w-full
+                    min-w-0
+                    bg-transparent
+                    text-sm
+                    text-[#51448C]
+                    outline-none
+                    placeholder:text-[#51448C]
+                  "
                 />
 
-                <span className="absolute bottom-1 left-0 h-[2px] w-0 rounded-full bg-[#51448C] transition-all duration-300 group-focus-within:w-full" />
+                <span
+                  className="
+                    absolute
+                    bottom-0
+                    left-0
+                    h-[2px]
+                    w-0
+                    rounded-full
+                    bg-[#51448C]
+                    transition-all
+                    duration-300
+                    group-focus-within:w-full
+                  "
+                />
               </div>
             </div>
           </div>
         </div>
 
-        {/* ERROR GET */}
+        {/* ===================================================
+            ERROR GET
+        ==================================================== */}
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-500">
+          <div
+            className="
+              mb-4
+              w-full
+              overflow-hidden
+              rounded-lg
+              bg-red-50
+              px-4
+              py-3
+              text-sm
+              break-words
+              text-red-500
+            "
+          >
             {error}
           </div>
         )}
 
-        {/* TABLE */}
-        <div className="w-full overflow-x-auto">
+        {/* ===================================================
+            TABLE
+        ==================================================== */}
+        <div
+          className="
+            w-full
+            min-w-0
+            overflow-x-auto
+            overflow-y-hidden
+            rounded-lg
+          "
+        >
           {isLoading ? (
             <div className="py-10 text-center text-sm text-gray-500">
               Memuat data customer...
@@ -382,14 +589,31 @@ const CustomerPage = () => {
               columns={columns}
               data={filteredCustomers}
               actionLabel="Action"
-              tableClassName="text-xs sm:text-sm min-w-[650px]"
+              tableClassName="
+                min-w-[650px]
+                text-xs
+                sm:text-sm
+              "
               actions={(row) => (
                 <div className="flex items-center gap-2">
                   {/* EDIT */}
                   <button
                     type="button"
                     onClick={() => handleEdit(row.id)}
-                    className="flex items-center whitespace-nowrap rounded-md bg-[#51448C] px-2 py-1 text-xs font-medium text-white transition hover:bg-[#433878]"
+                    className="
+                      flex
+                      items-center
+                      whitespace-nowrap
+                      rounded-md
+                      bg-[#51448C]
+                      px-2
+                      py-1
+                      text-xs
+                      font-medium
+                      text-white
+                      transition
+                      hover:bg-[#433878]
+                    "
                   >
                     <img
                       src={editIcon}
@@ -404,7 +628,20 @@ const CustomerPage = () => {
                   <button
                     type="button"
                     onClick={() => handleDelete(row.id)}
-                    className="flex items-center whitespace-nowrap rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                    className="
+                      flex
+                      items-center
+                      whitespace-nowrap
+                      rounded-md
+                      bg-red-500
+                      px-2
+                      py-1
+                      text-xs
+                      font-medium
+                      text-white
+                      transition
+                      hover:bg-red-600
+                    "
                   >
                     Hapus
                   </button>
@@ -415,27 +652,65 @@ const CustomerPage = () => {
         </div>
       </section>
 
-      {/* MODAL */}
+      {/* =====================================================
+          MODAL
+      ====================================================== */}
       {isFormOpen && (
         <div
-          className={`modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/10 px-4 ${
-            isFormClosing ? 'modal-backdrop-closing' : ''
-          }`}
+          className={`
+            modal-backdrop
+            fixed
+            inset-0
+            z-[100]
+            flex
+            items-center
+            justify-center
+            overflow-y-auto
+            bg-black/20
+            px-3
+            py-4
+            sm:px-5
+            sm:py-6
+            ${isFormClosing ? 'modal-backdrop-closing' : ''}
+          `}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="customer-form-title"
-            className={`modal-panel w-full max-w-md rounded-xl bg-[#f7f7f7] p-4 shadow-[0_5px_18px_rgba(0,0,0,0.18)] sm:p-5 ${
-              isFormClosing ? 'modal-panel-closing' : ''
-            }`}
+            className={`
+              modal-panel
+              my-auto
+              flex
+              max-h-[calc(100vh-2rem)]
+              w-full
+              max-w-md
+              flex-col
+              overflow-y-auto
+              rounded-xl
+              bg-[#f7f7f7]
+              p-4
+              shadow-[0_5px_18px_rgba(0,0,0,0.18)]
+              sm:max-h-[calc(100vh-3rem)]
+              sm:p-5
+              ${isFormClosing ? 'modal-panel-closing' : ''}
+            `}
           >
-            {/* MODAL HEADER */}
-            <div className="mb-1 flex items-start justify-between gap-3">
+            {/* =================================================
+                MODAL HEADER
+            ================================================== */}
+            <div className="mb-1 flex shrink-0 items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <span
                   aria-hidden="true"
-                  className="h-7 w-7 shrink-0 bg-[#51448C] sm:h-8 sm:w-8"
+                  className="
+                    h-7
+                    w-7
+                    shrink-0
+                    bg-[#51448C]
+                    sm:h-8
+                    sm:w-8
+                  "
                   style={{
                     maskImage: `url(${customerIcon})`,
                     maskPosition: 'center',
@@ -450,7 +725,14 @@ const CustomerPage = () => {
 
                 <h2
                   id="customer-form-title"
-                  className="text-sm font-bold leading-tight text-[#51448C] sm:text-lg"
+                  className="
+                    min-w-0
+                    text-sm
+                    font-bold
+                    leading-tight
+                    text-[#51448C]
+                    sm:text-lg
+                  "
                 >
                   INPUT &amp; EDIT DATA CUSTOMER
                 </h2>
@@ -460,7 +742,14 @@ const CustomerPage = () => {
                 type="button"
                 onClick={closeForm}
                 aria-label="Tutup form"
-                className="shrink-0 text-2xl leading-none text-[#51448C] transition hover:text-[#33295f]"
+                className="
+                  shrink-0
+                  text-2xl
+                  leading-none
+                  text-[#51448C]
+                  transition
+                  hover:text-[#33295f]
+                "
               >
                 ×
               </button>
@@ -470,7 +759,9 @@ const CustomerPage = () => {
               Silahkan masukkan data diri customer
             </p>
 
-            {/* FORM */}
+            {/* =================================================
+                FORM
+            ================================================== */}
             <form onSubmit={handleSubmit}>
               {/* NAME */}
               <label
@@ -486,7 +777,20 @@ const CustomerPage = () => {
                 value={formData.name}
                 onChange={handleFormChange}
                 placeholder="Masukkan nama"
-                className="mb-2.5 h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="
+                  mb-2.5
+                  h-9
+                  w-full
+                  rounded-lg
+                  border-0
+                  bg-white
+                  px-3
+                  text-xs
+                  outline-none
+                  ring-[#51448C]
+                  placeholder:text-[#c4c4c4]
+                  focus:ring-2
+                "
               />
 
               {/* NPWP */}
@@ -503,7 +807,20 @@ const CustomerPage = () => {
                 value={formData.npwp}
                 onChange={handleFormChange}
                 placeholder="Masukkan No. NPWP"
-                className="mb-2.5 h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="
+                  mb-2.5
+                  h-9
+                  w-full
+                  rounded-lg
+                  border-0
+                  bg-white
+                  px-3
+                  text-xs
+                  outline-none
+                  ring-[#51448C]
+                  placeholder:text-[#c4c4c4]
+                  focus:ring-2
+                "
               />
 
               {/* ADDRESS */}
@@ -520,7 +837,19 @@ const CustomerPage = () => {
                 value={formData.address}
                 onChange={handleFormChange}
                 placeholder="Masukkan alamat"
-                className="h-9 w-full rounded-lg border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                className="
+                  h-9
+                  w-full
+                  rounded-lg
+                  border-0
+                  bg-white
+                  px-3
+                  text-xs
+                  outline-none
+                  ring-[#51448C]
+                  placeholder:text-[#c4c4c4]
+                  focus:ring-2
+                "
               />
 
               {/* ERROR */}
@@ -529,6 +858,7 @@ const CustomerPage = () => {
                   <span aria-hidden="true" className="mr-1">
                     ⚠
                   </span>
+
                   {formError}
                 </p>
               )}
@@ -536,7 +866,21 @@ const CustomerPage = () => {
               {/* SAVE */}
               <button
                 type="submit"
-                className="mt-3 flex items-center rounded-md bg-[#51448C] px-3 py-2 text-[10px] font-medium text-white transition hover:bg-[#433878]"
+                className="
+                  mt-3
+                  inline-flex
+                  items-center
+                  rounded-md
+                  bg-[#51448C]
+                  px-3
+                  py-2
+                  text-[10px]
+                  font-medium
+                  text-white
+                  transition
+                  hover:bg-[#433878]
+                  active:scale-[0.98]
+                "
               >
                 <img
                   src={saveIcon}

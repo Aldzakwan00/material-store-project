@@ -101,47 +101,64 @@ export const updateSuratJalan = async (suratJalanId, suratJalanData) => {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-            errorData.message || 'Gagal mengupdate surat jalan'
-        );
+
+        const errorMessage =
+            errorData.detail ||
+            errorData.message ||
+            errorData.error ||
+            'Gagal mengupdate surat jalan';
+
+        const error = new Error(errorMessage);
+        error.status = response.status;
+
+        throw error;
     }
 
     return await response.json();
 };
 
 export const deleteSuratJalan = async (suratJalanId) => {
-    const token = sessionStorage.getItem('token')
+    const token = sessionStorage.getItem('token');
 
-    const response = await fetch(
-        `${API_URL}/surat-jalan/${suratJalanId}`,
-        {
-            method: 'DELETE',
-            headers: {
-                Accept: 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    )
+    const response = await fetch(`${API_URL}/surat-jalan/${suratJalanId}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
 
-    // DELETE berhasil
-    if (response.ok) {
-        return true
+    if (response.status === 401) {
+        throw new Error('Sesi login telah berakhir');
     }
 
-    // Kalau gagal, coba ambil pesan dari response
-    let message = 'Surat jalan gagal dihapus.'
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
 
-    try {
-        const data = await response.json()
+        const errorMessage =
+            errorData.detail ||
+            errorData.message ||
+            errorData.error ||
+            'Gagal menghapus surat jalan';
 
-        message =
-            data?.message ||
-            data?.detail ||
-            data?.error ||
-            message
-    } catch {
-        // Response bukan JSON, gunakan pesan default
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.detail = errorData.detail || '';
+        error.data = errorData;
+
+        throw error;
     }
 
-    throw new Error(message)
-}
+    // Backend mungkin tidak mengembalikan JSON setelah DELETE.
+    // Jadi jangan memaksa response.json().
+    if (response.status === 204) {
+        return null;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        return await response.json();
+    }
+
+    return null;
+};

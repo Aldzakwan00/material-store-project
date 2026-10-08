@@ -42,14 +42,50 @@ export const changePassword = async (passwordLama, passwordBaru) => {
     }),
   })
 
-  const data = await response.json()
+  let data = {}
 
-  if (response.status === 401) {
-    throw new Error('Password lama salah')
+  try {
+    data = await response.json()
+  } catch {
+    data = {}
   }
 
+  // Password lama salah
+  if (response.status === 401) {
+    throw new Error(
+      data.message || data.detail || 'Password lama salah'
+    )
+  }
+
+  // Validation error dari backend
+  if (response.status === 422) {
+    let message = 'Data password tidak valid'
+
+    if (data.detail) {
+      if (Array.isArray(data.detail)) {
+        message = data.detail
+          .map((item) => item.msg || item.message)
+          .filter(Boolean)
+          .join(', ')
+      } else if (typeof data.detail === 'string') {
+        message = data.detail
+      }
+    }
+
+    if (data.message) {
+      message = data.message
+    }
+
+    throw new Error(message)
+  }
+
+  // Error lainnya
   if (!response.ok) {
-    throw new Error(data.message || 'Gagal mengubah password')
+    throw new Error(
+      data.message ||
+        data.detail ||
+        'Gagal mengubah password'
+    )
   }
 
   return data
