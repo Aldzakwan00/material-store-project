@@ -33,6 +33,20 @@ const formatRupiah = (value) => {
   return `Rp${Number(value || 0).toLocaleString('id-ID')}.00`
 }
 
+const formatNumberWithDots = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return ''
+  }
+
+  const digitsOnly = String(value).replace(/\D/g, '')
+
+  if (!digitsOnly) {
+    return ''
+  }
+
+  return Number(digitsOnly).toLocaleString('id-ID')
+}
+
 
 // ======================================================
 // FORMAT TANGGAL UNTUK INPUT
@@ -566,7 +580,11 @@ const Nota = () => {
               detailItems,
 
             pembayaran:
-              item.pembayaran || [],
+              Array.isArray(item.pembayaran)
+                ? item.pembayaran
+                : Array.isArray(item.riwayat_pembayaran)
+                  ? item.riwayat_pembayaran
+                  : [],
           }
         })
 
@@ -1825,6 +1843,19 @@ const Nota = () => {
       }
 
 
+      if (name === 'jumlahBayar') {
+        const sanitizedValue = String(value).replace(/\D/g, '')
+
+        return {
+          ...current,
+          jumlahBayar:
+            sanitizedValue === ''
+              ? ''
+              : Number(sanitizedValue),
+        }
+      }
+
+
       return {
         ...current,
         [name]:
@@ -1839,9 +1870,9 @@ const Nota = () => {
   // ======================================================
   // CLOSE PAYMENT
   // ======================================================
-  const closePaymentForm = () => {
+  const closePaymentForm = (force = false) => {
 
-    if (paymentLoading) return
+    if (paymentLoading && !force) return
 
     setIsPaymentClosing(true)
 
@@ -2053,7 +2084,7 @@ const Nota = () => {
         }
 
 
-        closePaymentForm()
+        closePaymentForm(true)
 
 
         await Swal.fire({
@@ -2485,6 +2516,12 @@ const Nota = () => {
     },
 
   ]
+
+  const paymentHistory =
+    invoices.find(
+      (invoice) =>
+        Number(invoice.id) === Number(paymentData.id)
+    )?.pembayaran || []
 
 
   // ======================================================
@@ -4035,17 +4072,18 @@ const Nota = () => {
                         </span>
 
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           name="jumlahBayar"
                           value={
                             paymentData.jumlahBayar
+                              ? formatNumberWithDots(
+                                  paymentData.jumlahBayar
+                                )
+                              : ''
                           }
                           onChange={
                             handlePaymentChange
-                          }
-                          min="0"
-                          max={
-                            paymentData.sisaTagihan
                           }
                           readOnly={
                             paymentData.status ===
@@ -4100,13 +4138,13 @@ const Nota = () => {
                         </h3>
 
                         <p className="mt-1 text-[10px] text-[#999999] sm:text-xs">
-                          Riwayat pembayaran nota akan ditampilkan di sini.
+                          Riwayat pembayaran tersimpan untuk nota ini.
                         </p>
 
                       </div>
 
                       <span className="w-fit rounded-full bg-[#f1effa] px-3 py-1 text-[10px] font-medium text-[#51448C]">
-                        Belum tersedia
+                        {paymentHistory.length} pembayaran
                       </span>
 
                     </div>
@@ -4149,52 +4187,46 @@ const Nota = () => {
                         </thead>
 
 
-                        <tbody>
+                        <tbody className="divide-y divide-[#eeeeee]">
+                          {paymentHistory.length > 0 ? (
+                            paymentHistory.map((payment, index) => {
+                              const status =
+                                String(payment.status || '').toLowerCase() === 'dilunaskan' ||
+                                String(payment.status || '').toLowerCase() === 'lunas'
+                                  ? 'Lunas'
+                                  : 'Cicil'
 
-                          <tr>
-
-                            <td
-                              colSpan={5}
-                              className="h-[170px] px-4 py-6 text-center"
-                            >
-
-                              <div className="flex flex-col items-center justify-center">
-
-                                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f1effa]">
-
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 text-[#51448C]"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={1.5}
-                                  >
-
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M9 5h6M9 9h6M9 13h3m-7 8h10a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2Z"
-                                    />
-
-                                  </svg>
-
-                                </div>
-
-                                <span className="text-xs font-medium text-[#8f899d]">
-                                  Belum ada riwayat pembayaran
-                                </span>
-
-                                <span className="mt-1 text-[10px] text-[#b0abb8]">
-                                  Data pembayaran akan muncul setelah API riwayat tersedia.
-                                </span>
-
-                              </div>
-
-                            </td>
-
-                          </tr>
-
+                              return (
+                                <tr key={payment.id ?? payment.pembayaran_id ?? index}>
+                                  <td className="px-4 py-3 text-[#707070]">
+                                    {index + 1}
+                                  </td>
+                                  <td className="px-4 py-3 text-[#707070]">
+                                    {formatDateDisplay(
+                                      payment.tanggal_bayar ?? payment.tanggal
+                                    ) || '-'}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {renderStatus(status)}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-semibold text-[#333333]">
+                                    {formatRupiah(
+                                      payment.jumlah_bayar ?? payment.jumlah
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-center text-[#999999]">
+                                    -
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          ) : (
+                            <tr>
+                              <td colSpan={5} className="h-[120px] px-4 py-6 text-center text-xs text-[#8f899d]">
+                                Belum ada riwayat pembayaran untuk nota ini.
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
 
                       </table>

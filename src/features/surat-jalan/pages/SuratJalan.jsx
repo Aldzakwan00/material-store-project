@@ -2538,7 +2538,7 @@ const handleSubmit = async (event) => {
                                                         Harga Beli
                                                     </label>
 
-                                                    <div className="flex h-9 items-center rounded-md bg-gray-100 px-3 text-[10px] font-medium text-gray-600">
+                                                    <div className="flex h-9 items-center rounded-md bg-gray-100 px-3 text-sm font-medium text-gray-600">
                                                         Rp{' '}
                                                         {formatPrice(
                                                             item.harga_beli
@@ -2553,7 +2553,7 @@ const handleSubmit = async (event) => {
                                                     </label>
 
                                                     <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#51448C]">
+                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#51448C]">
                                                             Rp
                                                         </span>
                                                         <input
@@ -2573,7 +2573,7 @@ const handleSubmit = async (event) => {
                                                                     event.target.value
                                                                 )
                                                             }
-                                                            className="h-9 w-full rounded-md border border-[#e4dfff] bg-[#f8f6ff] pl-9 pr-3 text-[10px] font-semibold text-[#51448C] outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
+                                                            className="h-9 w-full rounded-md border border-[#e4dfff] bg-[#f8f6ff] pl-9 pr-3 text-xs font-semibold text-[#51448C] outline-none transition focus:border-[#51448C] focus:ring-2 focus:ring-[#51448C]/10"
                                                             placeholder="0"
                                                         />
                                                     </div>
@@ -2585,7 +2585,7 @@ const handleSubmit = async (event) => {
                                                         Subtotal
                                                     </label>
 
-                                                    <div className="flex h-9 items-center rounded-md bg-[#f8f6ff] px-3 text-[10px] font-bold text-[#51448C]">
+                                                    <div className="flex h-9 items-center rounded-md bg-[#f8f6ff] px-3 text-sm font-bold text-[#51448C]">
                                                         Rp{' '}
                                                         {formatPrice(
                                                             subtotal

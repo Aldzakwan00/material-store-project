@@ -12,6 +12,7 @@ import AppLayout from '../components/layout/AppLayout'
 import ProtectedRoute from './ProtectedRoutes'
 import ChangePassword from '../features/auth/pages/ChangePassword'
 import NotaTagihan from '../features/Nota/pages/Nota'
+import LaporanNotaTagihan from '../features/Nota/pages/LaporanNotaTagihan'
 
 const AppRoutes = () => {
     return (
@@ -29,6 +30,7 @@ const AppRoutes = () => {
                     <Route path="/data-project" element={<ProjectPage />} />
                     <Route path="/surat-jalan" element={<SuratJalan />} />
                     <Route path="/nota-tagihan" element={<NotaTagihan />} />
+                    <Route path="/laporan-nota-tagihan" element={<LaporanNotaTagihan />} />
                     <Route path="/change-password" element={<ChangePassword />} />
                     <Route path="*" element={<NotFound />} />
                 </Route>

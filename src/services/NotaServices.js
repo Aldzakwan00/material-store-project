@@ -21,6 +21,36 @@ export const getNotaTagihan = async () => {
     return await response.json();
 }
 
+export const getLaporanLabaRugi = async ({ dari, sampai } = {}) => {
+    const token = sessionStorage.getItem('token');
+    const query = new URLSearchParams();
+
+    if (dari) query.set('dari', dari);
+    if (sampai) query.set('sampai', sampai);
+    const queryString = query.toString();
+
+    const response = await fetch(
+        `${API_URL}/laporan/laba-rugi${queryString ? `?${queryString}` : ''}`,
+        {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        }
+    );
+
+    if (response.status === 401) {
+        throw new Error('Sesi login telah berakhir');
+    }
+
+    if (!response.ok) {
+        throw new Error('Gagal mengambil laporan laba rugi');
+    }
+
+    return await response.json();
+}
+
 export const getSuratJalanDariSampai = async (customer_id, driver_id, dari, sampai) => {
     const token = sessionStorage.getItem('token');  
 

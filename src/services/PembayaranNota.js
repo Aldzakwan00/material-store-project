@@ -1,5 +1,19 @@
 import API_URL from "./API";
 
+const readResponse = async (response) => {
+    const text = await response.text();
+
+    if (!text) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return { message: text };
+    }
+};
+
 export const bayarCicil = async (notaId, pembayaranData) => {
     const token = sessionStorage.getItem('token');
 
@@ -22,11 +36,17 @@ export const bayarCicil = async (notaId, pembayaranData) => {
         throw new Error('Sesi login telah berakhir');
     }
 
+    const responseData = await readResponse(response);
+
     if (!response.ok) {
-        throw new Error('Gagal melakukan pembayaran cicilan');
+        throw new Error(
+            responseData?.message ||
+            responseData?.error ||
+            'Gagal melakukan pembayaran cicilan'
+        );
     }
 
-    return await response.json();
+    return responseData;
 }
 
 export const bayarLunas = async (notaId, pembayaranData) => {
@@ -51,11 +71,17 @@ export const bayarLunas = async (notaId, pembayaranData) => {
         throw new Error('Sesi login telah berakhir');
     }
 
+    const responseData = await readResponse(response);
+
     if (!response.ok) {
-        throw new Error('Gagal melakukan pembayaran lunas');
+        throw new Error(
+            responseData?.message ||
+            responseData?.error ||
+            'Gagal melakukan pembayaran lunas'
+        );
     }
 
-    return await response.json();
+    return responseData;
 }
 
 export const deletePembayaran = async (notaId, pembayaranId) => {
