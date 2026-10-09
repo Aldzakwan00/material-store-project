@@ -290,7 +290,9 @@ const DataTable = ({
                           text-center
                         "
                       >
-                        {actions(row)}
+                        <div className="flex w-full items-center justify-center">
+                          {actions(row)}
+                        </div>
                       </td>
                     )}
                   </tr>
