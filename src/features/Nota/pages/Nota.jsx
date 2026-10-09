@@ -9,7 +9,6 @@ import {
   getNotaTagihan,
   getSuratJalanDariSampai,
   getNotaTagihanById,
-  createNotaTagihanAll,
   createNotaTagihanChecked,
   updateNotaTagihanCicil,
   updateNotaTagihanLunas,
@@ -1644,56 +1643,19 @@ const Nota = () => {
     }
 
 
-    // ==================================================
+        // ==================================================
     // CREATE
     // ==================================================
     try {
 
-      let response
-
-
-      if (isAllSelected) {
-
-        response =
-          await createNotaTagihanAll({
-            customer_id:
-              Number(
-                formData.customer_id
-              ),
-
-            tanggal_kirim_dari:
-              formData.tanggal_kirim_dari,
-
-            tanggal_kirim_sampai:
-              formData.tanggal_kirim_sampai,
-          })
-
-      } else {
-
-        response =
-          await createNotaTagihanChecked({
-            customer_id:
-              Number(
-                formData.customer_id
-              ),
-
-            tanggal_kirim_dari:
-              formData.tanggal_kirim_dari,
-
-            tanggal_kirim_sampai:
-              formData.tanggal_kirim_sampai,
-
-            item_ids:
-              normalizeIds(
-                selectedItemIds
-              ),
-          })
-
-      }
-
+      const response = await createNotaTagihanChecked({
+        customer_id: Number(formData.customer_id),
+        tanggal_kirim_dari: formData.tanggal_kirim_dari,
+        tanggal_kirim_sampai: formData.tanggal_kirim_sampai,
+        item_ids: normalizeIds(selectedItemIds),
+      })
 
       closeForm()
-
 
       await Swal.fire({
         icon: 'success',
@@ -1704,7 +1666,6 @@ const Nota = () => {
         confirmButtonColor:
           '#51448C',
       })
-
 
       await fetchNotaTagihan()
 
