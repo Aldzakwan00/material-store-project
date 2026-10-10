@@ -43,10 +43,15 @@ const handleResponse = async (response, defaultMessage) => {
 }
 
 // GET DRIVER
-export const getDriver = async () => {
+export const getDriver = async (dari, sampai) => {
   const token = getToken();
 
-  const response = await fetch(`${API_URL}/driver`, {
+  const params = new URLSearchParams();
+  if (dari) params.append("dari", dari);
+  if (sampai) params.append("sampai", sampai);
+  const query = params.toString();
+
+  const response = await fetch(`${API_URL}/driver${query ? `?${query}` : ""}`, {
     method: "GET",
     headers: {
       Accept: "application/json",

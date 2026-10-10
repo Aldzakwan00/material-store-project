@@ -71,11 +71,11 @@ const DriverPage = () => {
   // GET DATA
   // ========================================
 
-  const fetchDrivers = async () => {
+  const fetchDrivers = async (dari, sampai) => {
     try {
       setIsLoading(true)
 
-      const response = await getDriver()
+      const response = await getDriver(dari, sampai)
 
       const driverData = Array.isArray(response)
         ? response
@@ -83,26 +83,11 @@ const DriverPage = () => {
 
       const formattedDrivers = driverData.map((driver) => ({
         id: driver.id,
-
         code: driver.kode || '',
-
         name: driver.nama_supir || '',
-
         plateNumber: driver.no_plat_mobil || '',
-
         address: driver.alamat || '',
-
         delivery: Number(driver.jumlah_pengantaran || 0),
-
-        // ====================================
-        // SIMPAN TANGGAL DARI API
-        // ====================================
-        date:
-          driver.tanggal ||
-          driver.created_at ||
-          driver.tanggal_dibuat ||
-          driver.created_at_date ||
-          '',
       }))
 
       setDrivers(formattedDrivers)
@@ -146,14 +131,12 @@ const DriverPage = () => {
     setFilterData(emptyFilter)
     setAppliedFilter(emptyFilter)
     setIsFilterOpen(false)
+
+    fetchDrivers()
   }
 
   const handleApplyFilter = () => {
     const { startDate, endDate } = filterData
-
-    // ======================================
-    // VALIDASI TANGGAL
-    // ======================================
 
     if (startDate && endDate && startDate > endDate) {
       Swal.fire({
@@ -173,6 +156,8 @@ const DriverPage = () => {
     })
 
     setIsFilterOpen(false)
+
+    fetchDrivers(startDate || undefined, endDate || undefined)
   }
 
   // ========================================
@@ -400,20 +385,12 @@ const DriverPage = () => {
   // ========================================
 
   const filteredDrivers = drivers.filter((driver) => {
-    // ======================================
-    // SEARCH
-    // ======================================
-
     const keyword = search.toLowerCase().trim()
 
     const code = String(driver.code || '').toLowerCase()
     const name = String(driver.name || '').toLowerCase()
-    const plateNumber = String(
-      driver.plateNumber || '',
-    ).toLowerCase()
-    const address = String(
-      driver.address || '',
-    ).toLowerCase()
+    const plateNumber = String(driver.plateNumber || '').toLowerCase()
+    const address = String(driver.address || '').toLowerCase()
 
     const matchesSearch =
       !keyword ||
@@ -422,46 +399,7 @@ const DriverPage = () => {
       plateNumber.includes(keyword) ||
       address.includes(keyword)
 
-    if (!matchesSearch) {
-      return false
-    }
-
-    // ======================================
-    // FILTER TANGGAL
-    // ======================================
-
-    const { startDate, endDate } = appliedFilter
-
-    // Tidak ada filter tanggal
-    if (!startDate && !endDate) {
-      return true
-    }
-
-    // Driver tidak memiliki tanggal
-    if (!driver.date) {
-      return false
-    }
-
-    // Ambil bagian tanggal saja
-    const driverDate = String(driver.date).slice(0, 10)
-
-    // ======================================
-    // FILTER TANGGAL MULAI
-    // ======================================
-
-    if (startDate && driverDate < startDate) {
-      return false
-    }
-
-    // ======================================
-    // FILTER TANGGAL SAMPAI
-    // ======================================
-
-    if (endDate && driverDate > endDate) {
-      return false
-    }
-
-    return true
+    return matchesSearch
   })
 
   // ========================================
