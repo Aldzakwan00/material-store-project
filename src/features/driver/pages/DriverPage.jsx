@@ -252,10 +252,9 @@ const DriverPage = () => {
 
     if (
       !formData.name.trim() ||
-      !formData.plateNumber.trim() ||
-      !formData.address.trim()
+      !formData.plateNumber.trim()
     ) {
-      setFormError('Kolom tidak boleh kosong')
+      setFormError('Nama supir dan plat nomor wajib diisi')
       return
     }
 
@@ -265,7 +264,7 @@ const DriverPage = () => {
       const payload = {
         nama_supir: formData.name.trim(),
         no_plat_mobil: formData.plateNumber.trim(),
-        alamat: formData.address.trim(),
+        alamat: formData.address.trim() || null,
         jumlah_pengantaran: Number(formData.delivery || 0),
       }
 

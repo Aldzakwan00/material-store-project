@@ -310,12 +310,9 @@ const ProjectPage = () => {
 
     if (
       !formData.projectName.trim() ||
-      !formData.city.trim() ||
-      !formData.shippingAddress.trim() ||
-      !formData.contactPerson.trim() ||
-      !formData.phone.trim()
+      !formData.city.trim() 
     ) {
-      setFormError('Kolom tidak boleh kosong')
+      setFormError('Nama proyek dan Kota wajib diisi')
       return
     }
 
@@ -328,9 +325,9 @@ const ProjectPage = () => {
         nama_pelanggan: formData.customer.trim(),
         nama_proyek: formData.projectName.trim(),
         kota: formData.city.trim(),
-        alamat_kirim: formData.shippingAddress.trim(),
-        contact_person: formData.contactPerson.trim(),
-        proyek_telp: formData.phone.trim(),
+        alamat_kirim: formData.shippingAddress.trim() || null,
+        contact_person: formData.contactPerson.trim() || null,
+        proyek_telp: formData.phone.trim() || null,
       }
 
       if (editingId !== null) {
