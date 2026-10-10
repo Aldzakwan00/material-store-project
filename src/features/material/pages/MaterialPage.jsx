@@ -587,12 +587,10 @@ const MaterialPage = () => {
 
         if (
             !formData.name.trim() ||
-            !formData.unit.trim() ||
-            !formData.buyPrice.trim() ||
-            !formData.sellPrice.trim()
+            !formData.unit.trim() 
         ) {
             setFormError(
-                'Kolom tidak boleh kosong'
+                'nama material dan satuan wajib diisi'
             )
 
             return
@@ -610,7 +608,7 @@ const MaterialPage = () => {
                     formData.name.trim(),
 
                 satuan:
-                    formData.unit,
+                    formData.unit.trim(),
 
                 harga_beli:
                     Number(
@@ -1770,37 +1768,19 @@ const MaterialPage = () => {
                                         Satuan
                                     </label>
 
-                                    <select
+                                    <input
                                         id="material-unit"
                                         name="unit"
+                                        type="text"
                                         value={
                                             formData.unit
                                         }
                                         onChange={
                                             handleFormChange
                                         }
-                                        className="h-10 w-full rounded-md border-0 bg-white px-2 text-xs text-[#333] outline-none ring-[#51448C] focus:ring-2"
-                                    >
-                                        <option value="">
-                                            -
-                                        </option>
-
-                                        <option value="M3">
-                                            M3
-                                        </option>
-
-                                        <option value="Sak">
-                                            Sak
-                                        </option>
-
-                                        <option value="Batang">
-                                            Batang
-                                        </option>
-
-                                        <option value="Pcs">
-                                            Pcs
-                                        </option>
-                                    </select>
+                                        placeholder="Masukkan satuan (mis. M3, Sak, Batang, Pcs)"
+                                        className="h-10 w-full rounded-md border-0 bg-white px-3 text-xs outline-none ring-[#51448C] placeholder:text-[#c4c4c4] focus:ring-2"
+                                    />
                                 </div>
                             </div>
 
